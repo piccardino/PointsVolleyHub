@@ -40,11 +40,6 @@ android {
         viewBinding = true
     }
     
-    sourceSets {
-        getByName("main") {
-            java.srcDirs("src/main/java")
-        }
-    }
 }
 
 dependencies {
