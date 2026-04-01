@@ -11,12 +11,12 @@ java {
 
 android {
     namespace = "com.volleyhub.pro"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.volleyhub.pro"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -38,6 +38,12 @@ android {
     }
     buildFeatures {
         viewBinding = true
+    }
+    
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/java")
+        }
     }
 }
 
