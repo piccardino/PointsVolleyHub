@@ -1,5 +1,6 @@
 package com.volleyhub.pro;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -207,10 +208,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateButtonBackgrounds(int teamAColor, int teamBColor) {
-        // Colors are applied via static drawables defined in XML
-        // Team A buttons use button_team_a_flat.xml
-        // Team B buttons use button_team_b_flat.xml
-        // Dynamic color change not needed with static drawables
+        ColorStateList cslA = ColorStateList.valueOf(teamAColor);
+        ColorStateList cslB = ColorStateList.valueOf(teamBColor);
+        
+        if (btnAddPointA != null) btnAddPointA.setBackgroundTintList(cslA);
+        if (btnRemovePointA != null) btnRemovePointA.setBackgroundTintList(cslA);
+        if (btnAddPointB != null) btnAddPointB.setBackgroundTintList(cslB);
+        if (btnRemovePointB != null) btnRemovePointB.setBackgroundTintList(cslB);
     }
     
     private void updateScore(boolean add, boolean teamA) {
