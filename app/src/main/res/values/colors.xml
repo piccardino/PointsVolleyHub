@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- App Colors -->
+    <color name="background">#1a1a20</color>
+    <color name="primary">#00fbff</color>
+    <color name="secondary">#ff0055</color>
+    <color name="accent">#7c3aed</color>
+    <color name="text_primary">#ffffff</color>
+    <color name="text_secondary">#99ffffff</color>
+    <color name="input_background">#1f1f2a</color>
+    <color name="border">#33ffffff</color>
+    
+    <!-- Team Colors -->
+    <color name="team_a_color">#00fbff</color>
+    <color name="team_a_pressed">#00c4cc</color>
+    <color name="team_b_color">#ff0055</color>
+    <color name="team_b_pressed">#cc0044</color>
+    <color name="secondary_pressed">#666666</color>
+    
+    <!-- Timer Colors -->
+    <color name="color_start">#00ff88</color>
+    <color name="color_stop">#ffaa00</color>
+    <color name="color_stop_pressed">#cc8800</color>
+    
+    <!-- Button Colors -->
+    <color name="color_reset">#7c3aed</color>
+    <color name="color_reset_pressed">#5a2ab8</color>
+    <color name="color_logout">#666666</color>
+    <color name="color_logout_pressed">#444444</color>
+</resources>

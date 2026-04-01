@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "614392919865",
+    "firebase_url": "https://volley-hub-c90ca-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "volley-hub-c90ca",
+    "storage_bucket": "volley-hub-c90ca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:614392919865:android:0b752f21db3ce074089ae8",
+        "android_client_info": {
+          "package_name": "com.volleyhub.pro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "614392919865-ofota1pn71noh36cu18t24o97okbqf9p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRwOn9NpNhp2GRhumgxPY0RNUXrQeE6UQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "614392919865-ofota1pn71noh36cu18t24o97okbqf9p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
