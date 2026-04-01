@@ -8,13 +8,16 @@ public class MatchData {
     private int scoreB;
     private int setsWonA;
     private int setsWonB;
-    private long elapsedTime;
-    private boolean isTimerRunning;
-    private long lastUpdateTime;
+    private int currentSet;
+    private long timerAccumulatedSeconds;
+    private boolean timerIsPaused;
+    private long timerLastStartedAt;
     private String teamAName;
     private String teamBName;
     private String teamAColor;
     private String teamBColor;
+    private String servingTeam;
+    private String receivingTeam;
 
     public MatchData() {
         // Default constructor required for Firebase
@@ -22,37 +25,20 @@ public class MatchData {
         this.scoreB = 0;
         this.setsWonA = 0;
         this.setsWonB = 0;
-        this.elapsedTime = 0;
-        this.isTimerRunning = false;
-        this.lastUpdateTime = System.currentTimeMillis();
+        this.currentSet = 1;
+        this.timerAccumulatedSeconds = 0;
+        this.timerIsPaused = true;
+        this.timerLastStartedAt = 0;
         this.teamAName = "Team A";
         this.teamBName = "Team B";
         this.teamAColor = "#00fbff";
         this.teamBColor = "#ff0055";
-    }
-
-    public MatchData(String teamAName, String teamBName) {
-        this.scoreA = 0;
-        this.scoreB = 0;
-        this.setsWonA = 0;
-        this.setsWonB = 0;
-        this.elapsedTime = 0;
-        this.isTimerRunning = false;
-        this.lastUpdateTime = System.currentTimeMillis();
-        this.teamAName = teamAName;
-        this.teamBName = teamBName;
-        this.teamAColor = "#00fbff";
-        this.teamBColor = "#ff0055";
+        this.servingTeam = "A";
+        this.receivingTeam = "B";
     }
 
     public MatchData(String teamAName, String teamBName, String teamAColor, String teamBColor) {
-        this.scoreA = 0;
-        this.scoreB = 0;
-        this.setsWonA = 0;
-        this.setsWonB = 0;
-        this.elapsedTime = 0;
-        this.isTimerRunning = false;
-        this.lastUpdateTime = System.currentTimeMillis();
+        this();
         this.teamAName = teamAName;
         this.teamBName = teamBName;
         this.teamAColor = teamAColor;
@@ -64,26 +50,32 @@ public class MatchData {
     public int getScoreB() { return scoreB; }
     public int getSetsWonA() { return setsWonA; }
     public int getSetsWonB() { return setsWonB; }
-    public long getElapsedTime() { return elapsedTime; }
-    public boolean isTimerRunning() { return isTimerRunning; }
-    public long getLastUpdateTime() { return lastUpdateTime; }
+    public int getCurrentSet() { return currentSet; }
+    public long getTimerAccumulatedSeconds() { return timerAccumulatedSeconds; }
+    public boolean isTimerIsPaused() { return timerIsPaused; }
+    public long getTimerLastStartedAt() { return timerLastStartedAt; }
     public String getTeamAName() { return teamAName != null ? teamAName : "Team A"; }
     public String getTeamBName() { return teamBName != null ? teamBName : "Team B"; }
     public String getTeamAColor() { return teamAColor != null ? teamAColor : "#00fbff"; }
     public String getTeamBColor() { return teamBColor != null ? teamBColor : "#ff0055"; }
+    public String getServingTeam() { return servingTeam; }
+    public String getReceivingTeam() { return receivingTeam; }
 
     // Setters
     public void setScoreA(int scoreA) { this.scoreA = scoreA; }
     public void setScoreB(int scoreB) { this.scoreB = scoreB; }
     public void setSetsWonA(int setsWonA) { this.setsWonA = setsWonA; }
     public void setSetsWonB(int setsWonB) { this.setsWonB = setsWonB; }
-    public void setElapsedTime(long elapsedTime) { this.elapsedTime = elapsedTime; }
-    public void setTimerRunning(boolean timerRunning) { isTimerRunning = timerRunning; }
-    public void setLastUpdateTime(long lastUpdateTime) { this.lastUpdateTime = lastUpdateTime; }
+    public void setCurrentSet(int currentSet) { this.currentSet = currentSet; }
+    public void setTimerAccumulatedSeconds(long timerAccumulatedSeconds) { this.timerAccumulatedSeconds = timerAccumulatedSeconds; }
+    public void setTimerIsPaused(boolean timerIsPaused) { this.timerIsPaused = timerIsPaused; }
+    public void setTimerLastStartedAt(long timerLastStartedAt) { this.timerLastStartedAt = timerLastStartedAt; }
     public void setTeamAName(String teamAName) { this.teamAName = teamAName; }
     public void setTeamBName(String teamBName) { this.teamBName = teamBName; }
     public void setTeamAColor(String teamAColor) { this.teamAColor = teamAColor; }
     public void setTeamBColor(String teamBColor) { this.teamBColor = teamBColor; }
+    public void setServingTeam(String servingTeam) { this.servingTeam = servingTeam; }
+    public void setReceivingTeam(String receivingTeam) { this.receivingTeam = receivingTeam; }
 
     // Helper methods
     public void addPointA() { scoreA++; }

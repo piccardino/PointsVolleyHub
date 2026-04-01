@@ -61,10 +61,15 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
-        String userId = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "";
-        // Use same path structure as live-match.html: users/{uid}/matchData/liveMatch
+        if (mAuth.getCurrentUser() == null) {
+            Log.e(TAG, "No user logged in, finishing MainActivity");
+            finish();
+            return;
+        }
+        String userId = mAuth.getCurrentUser().getUid();
+        // Use same path structure as live-match.html: users/{uid}/matchData/liveMatchProgress_index
         mMatchRef = FirebaseDatabase.getInstance().getReference()
-            .child("users").child(userId).child("matchData").child("liveMatch");
+            .child("users").child(userId).child("matchData").child("liveMatchProgress_index");
 
         // Initialize views
         scoreAView = findViewById(R.id.scoreAView);
@@ -151,8 +156,10 @@ public class MainActivity extends AppCompatActivity {
         scoreBView.setText(String.valueOf(match.getScoreB()));
         teamANameView.setText(match.getTeamAName());
         teamBNameView.setText(match.getTeamBName());
-        setsView.setText(String.format(Locale.getDefault(), "Set: %d - %d",
-            match.getSetsWonA(), match.getSetsWonB()));
+        
+        String setInfo = String.format(Locale.getDefault(), "Set %d: %d - %d",
+            match.getCurrentSet(), match.getSetsWonA(), match.getSetsWonB());
+        setsView.setText(setInfo);
 
         // Get team colors with fallback to defaults
         String teamAColorStr = match.getTeamAColor();
@@ -183,9 +190,9 @@ public class MainActivity extends AppCompatActivity {
             updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor);
         }
 
-        elapsedTime = match.getElapsedTime();
-        isTimerRunning = match.isTimerRunning();
-        lastUpdateTime = match.getLastUpdateTime();
+        elapsedTime = match.getTimerAccumulatedSeconds() * 1000;
+        isTimerRunning = !match.isTimerIsPaused();
+        lastUpdateTime = match.getTimerLastStartedAt();
 
         updateTimerButton();
 
@@ -229,15 +236,16 @@ public class MainActivity extends AppCompatActivity {
             if (task.isSuccessful() && task.getResult().exists()) {
                 MatchData match = task.getResult().getValue(MatchData.class);
                 if (match != null) {
-                    if (isTimerRunning) {
+                    if (!match.isTimerIsPaused()) {
                         // Stop timer - add elapsed time
                         long currentTime = System.currentTimeMillis();
-                        match.setElapsedTime(match.getElapsedTime() + (currentTime - match.getLastUpdateTime()));
-                        match.setTimerRunning(false);
+                        long sessionTimeSeconds = (currentTime - match.getTimerLastStartedAt()) / 1000;
+                        match.setTimerAccumulatedSeconds(match.getTimerAccumulatedSeconds() + sessionTimeSeconds);
+                        match.setTimerIsPaused(true);
                     } else {
                         // Start timer
-                        match.setLastUpdateTime(System.currentTimeMillis());
-                        match.setTimerRunning(true);
+                        match.setTimerLastStartedAt(System.currentTimeMillis());
+                        match.setTimerIsPaused(false);
                     }
                     mMatchRef.setValue(match);
                 }
@@ -284,9 +292,10 @@ public class MainActivity extends AppCompatActivity {
                     match.setScoreB(0);
                     match.setSetsWonA(0);
                     match.setSetsWonB(0);
-                    match.setElapsedTime(0);
-                    match.setTimerRunning(false);
-                    match.setLastUpdateTime(System.currentTimeMillis());
+                    match.setCurrentSet(1);
+                    match.setTimerAccumulatedSeconds(0);
+                    match.setTimerIsPaused(true);
+                    match.setTimerLastStartedAt(System.currentTimeMillis());
                     mMatchRef.setValue(match);
                 }
             }

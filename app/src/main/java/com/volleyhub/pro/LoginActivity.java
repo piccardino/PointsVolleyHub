@@ -87,7 +87,7 @@ public class LoginActivity extends AppCompatActivity {
         if (user != null) {
             // Use same path structure as live-match.html: users/{uid}/matchData/liveMatch
             DatabaseReference matchRef = FirebaseDatabase.getInstance().getReference()
-                .child("users").child(user.getUid()).child("matchData").child("liveMatch");
+                .child("users").child(user.getUid()).child("matchData").child("liveMatchProgress_index");
 
             // Check if match data exists
             matchRef.get().addOnCompleteListener(task -> {
