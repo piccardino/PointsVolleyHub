@@ -1,5 +1,6 @@
 package com.volleyhub.pro;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -52,17 +53,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         // Keep screen on for Wear OS
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        
+
         setContentView(R.layout.activity_main);
-        
+
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         String userId = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "";
-        mMatchRef = FirebaseDatabase.getInstance().getReference().child(userId).child("match");
-        
+        // Use same path structure as live-match.html: users/{uid}/matchData/liveMatch
+        mMatchRef = FirebaseDatabase.getInstance().getReference()
+            .child("users").child(userId).child("matchData").child("liveMatch");
+
         // Initialize views
         scoreAView = findViewById(R.id.scoreAView);
         scoreBView = findViewById(R.id.scoreBView);
@@ -77,17 +80,17 @@ public class MainActivity extends AppCompatActivity {
         btnToggleTimer = findViewById(R.id.btnToggleTimer);
         btnResetMatch = findViewById(R.id.btnResetMatch);
         btnLogout = findViewById(R.id.btnLogout);
-        
+
         // Setup button listeners
         btnAddPointA.setOnClickListener(v -> updateScore(true, true));
         btnRemovePointA.setOnClickListener(v -> updateScore(false, true));
         btnAddPointB.setOnClickListener(v -> updateScore(true, false));
         btnRemovePointB.setOnClickListener(v -> updateScore(false, false));
-        
+
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnLogout.setOnClickListener(v -> logout());
-        
+
         // Timer handler
         timerHandler = new Handler(Looper.getMainLooper());
         timerRunnable = new Runnable() {
@@ -99,25 +102,45 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        
-        // Listen for Firebase updates
+
+        // Initialize match data if not exists, then listen for updates
+        initializeMatchDataIfNeeded();
         setupFirebaseListener();
+    }
+
+    private void initializeMatchDataIfNeeded() {
+        mMatchRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (!task.getResult().exists()) {
+                    // Initialize with default values including colors
+                    MatchData initialData = new MatchData("Team A", "Team B", "#00fbff", "#ff0055");
+                    mMatchRef.setValue(initialData);
+                }
+            } else {
+                Log.w(TAG, "Failed to check match data", task.getException());
+            }
+        });
     }
     
     private void setupFirebaseListener() {
         mMatchListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                MatchData match = dataSnapshot.getValue(MatchData.class);
-                if (match != null) {
-                    updateUI(match);
+                if (dataSnapshot.exists()) {
+                    MatchData match = dataSnapshot.getValue(MatchData.class);
+                    if (match != null) {
+                        updateUI(match);
+                    }
+                } else {
+                    // Data doesn't exist yet - will be initialized by initializeMatchDataIfNeeded()
+                    Log.d(TAG, "Match data not yet initialized");
                 }
             }
-            
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.w(TAG, "Failed to read value", databaseError.toException());
-                Toast.makeText(MainActivity.this, "Errore database", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Errore: " + databaseError.getMessage(), Toast.LENGTH_LONG).show();
             }
         };
         mMatchRef.addValueEventListener(mMatchListener);
@@ -128,23 +151,59 @@ public class MainActivity extends AppCompatActivity {
         scoreBView.setText(String.valueOf(match.getScoreB()));
         teamANameView.setText(match.getTeamAName());
         teamBNameView.setText(match.getTeamBName());
-        setsView.setText(String.format(Locale.getDefault(), "Set: %d - %d", 
+        setsView.setText(String.format(Locale.getDefault(), "Set: %d - %d",
             match.getSetsWonA(), match.getSetsWonB()));
+
+        // Get team colors with fallback to defaults
+        String teamAColorStr = match.getTeamAColor();
+        String teamBColorStr = match.getTeamBColor();
         
+        try {
+            int teamAColor = Color.parseColor(teamAColorStr);
+            int teamBColor = Color.parseColor(teamBColorStr);
+
+            teamANameView.setTextColor(teamAColor);
+            scoreAView.setTextColor(teamAColor);
+            teamBNameView.setTextColor(teamBColor);
+            scoreBView.setTextColor(teamBColor);
+            
+            // Update button backgrounds with team colors
+            updateButtonBackgrounds(teamAColor, teamBColor);
+        } catch (IllegalArgumentException e) {
+            // Fallback to default colors if parsing fails
+            Log.w(TAG, "Invalid color format, using defaults", e);
+            int defaultTeamAColor = Color.parseColor("#00fbff");
+            int defaultTeamBColor = Color.parseColor("#ff0055");
+            
+            teamANameView.setTextColor(defaultTeamAColor);
+            scoreAView.setTextColor(defaultTeamAColor);
+            teamBNameView.setTextColor(defaultTeamBColor);
+            scoreBView.setTextColor(defaultTeamBColor);
+            
+            updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor);
+        }
+
         elapsedTime = match.getElapsedTime();
         isTimerRunning = match.isTimerRunning();
         lastUpdateTime = match.getLastUpdateTime();
-        
+
         updateTimerButton();
-        
+
         if (isTimerRunning && timerHandler != null) {
             timerHandler.removeCallbacks(timerRunnable);
             timerHandler.post(timerRunnable);
         } else {
             timerHandler.removeCallbacks(timerRunnable);
         }
-        
+
         updateTimerDisplay();
+    }
+
+    private void updateButtonBackgrounds(int teamAColor, int teamBColor) {
+        // Colors are applied via static drawables defined in XML
+        // Team A buttons use button_team_a_flat.xml
+        // Team B buttons use button_team_b_flat.xml
+        // Dynamic color change not needed with static drawables
     }
     
     private void updateScore(boolean add, boolean teamA) {
@@ -209,10 +268,10 @@ public class MainActivity extends AppCompatActivity {
     private void updateTimerButton() {
         if (isTimerRunning) {
             btnToggleTimer.setText("STOP");
-            btnToggleTimer.setBackgroundColor(ContextCompat.getColor(this, R.color.color_stop));
+            btnToggleTimer.setBackgroundResource(R.drawable.button_stop_flat);
         } else {
             btnToggleTimer.setText("START");
-            btnToggleTimer.setBackgroundColor(ContextCompat.getColor(this, R.color.color_start));
+            btnToggleTimer.setBackgroundResource(R.drawable.button_start_flat);
         }
     }
     

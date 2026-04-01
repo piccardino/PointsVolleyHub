@@ -45,11 +45,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.passwordInput);
         loginButton = findViewById(R.id.loginButton);
         statusText = findViewById(R.id.statusText);
-        
-        // Set default team names
-        emailInput.setText("coach@example.com");
-        passwordInput.setText("password123");
-        
+
         loginButton.setOnClickListener(v -> attemptLogin());
         
         // Check if already logged in
@@ -89,14 +85,15 @@ public class LoginActivity extends AppCompatActivity {
     private void initializeMatchData() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
-            String matchId = user.getUid() + "/match";
-            DatabaseReference matchRef = mDatabase.child(matchId);
-            
+            // Use same path structure as live-match.html: users/{uid}/matchData/liveMatch
+            DatabaseReference matchRef = FirebaseDatabase.getInstance().getReference()
+                .child("users").child(user.getUid()).child("matchData").child("liveMatch");
+
             // Check if match data exists
             matchRef.get().addOnCompleteListener(task -> {
                 if (!task.isSuccessful() || !task.getResult().exists()) {
                     // Initialize with default values
-                    MatchData initialData = new MatchData("Team A", "Team B");
+                    MatchData initialData = new MatchData("Team A", "Team B", "#00fbff", "#ff0055");
                     matchRef.setValue(initialData);
                 }
             });

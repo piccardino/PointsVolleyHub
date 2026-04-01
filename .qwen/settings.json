@@ -4,7 +4,10 @@
       "Bash(gradlew.bat *)",
       "Bash(.\\gradlew.bat *)",
       "Bash(mkdir *)",
-      "Bash(move-item *)"
+      "Bash(move-item *)",
+      "Bash($env:java_home *)",
+      "Bash(set *)",
+      "Bash(dir *)"
     ]
   },
   "$version": 3
