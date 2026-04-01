@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnRemovePointB;
     private Button btnToggleTimer;
     private Button btnResetMatch;
-    private Button btnLogout;
+    private Button btnExit;
     
     private Handler timerHandler;
     private Runnable timerRunnable;
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         btnRemovePointB = findViewById(R.id.btnRemovePointB);
         btnToggleTimer = findViewById(R.id.btnToggleTimer);
         btnResetMatch = findViewById(R.id.btnResetMatch);
-        btnLogout = findViewById(R.id.btnLogout);
+        btnExit = findViewById(R.id.btnExit);
 
         // Setup button listeners
         btnAddPointA.setOnClickListener(v -> updateScore(true, true));
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
-        btnLogout.setOnClickListener(v -> logout());
+        btnExit.setOnClickListener(v -> logout());
 
         // Timer handler
         timerHandler = new Handler(Looper.getMainLooper());

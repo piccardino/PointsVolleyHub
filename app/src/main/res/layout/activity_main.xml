@@ -131,23 +131,23 @@
             <Button
                 android:id="@+id/btnAddPointA"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="28dp"
                 android:text="+ A"
                 android:textColor="@android:color/white"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:background="@drawable/button_team_a_flat"
-                android:padding="3dp"
-                android:layout_marginBottom="3dp" />
+                android:padding="2dp"
+                android:layout_marginBottom="2dp" />
 
             <Button
                 android:id="@+id/btnRemovePointA"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="28dp"
                 android:text="- A"
                 android:textColor="@android:color/white"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:background="@drawable/button_secondary_flat"
-                android:padding="3dp" />
+                android:padding="2dp" />
 
         </LinearLayout>
 
@@ -162,23 +162,23 @@
             <Button
                 android:id="@+id/btnAddPointB"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="28dp"
                 android:text="+ B"
                 android:textColor="@android:color/white"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:background="@drawable/button_team_b_flat"
-                android:padding="3dp"
-                android:layout_marginBottom="3dp" />
+                android:padding="2dp"
+                android:layout_marginBottom="2dp" />
 
             <Button
                 android:id="@+id/btnRemovePointB"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="28dp"
                 android:text="- B"
                 android:textColor="@android:color/white"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:background="@drawable/button_secondary_flat"
-                android:padding="3dp" />
+                android:padding="2dp" />
 
         </LinearLayout>
 
@@ -198,40 +198,43 @@
         <Button
             android:id="@+id/btnToggleTimer"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="32dp"
             android:text="START"
             android:textColor="@android:color/white"
             android:textSize="8sp"
             android:textStyle="bold"
             android:background="@drawable/button_start_flat"
-            android:padding="3dp"
+            android:backgroundTint="#333333"
+            android:padding="2dp"
             android:layout_weight="1"
             android:layout_marginEnd="2dp" />
 
         <Button
             android:id="@+id/btnResetMatch"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="32dp"
             android:text="RESET"
             android:textColor="@android:color/white"
             android:textSize="8sp"
             android:textStyle="bold"
             android:background="@drawable/button_reset_flat"
-            android:padding="3dp"
+            android:backgroundTint="#333333"
+            android:padding="2dp"
             android:layout_weight="1"
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp" />
 
         <Button
-            android:id="@+id/btnLogout"
+            android:id="@+id/btnExit"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="ESC"
+            android:layout_height="32dp"
+            android:text="EXIT"
             android:textColor="@android:color/white"
             android:textSize="8sp"
             android:textStyle="bold"
             android:background="@drawable/button_logout_flat"
-            android:padding="3dp"
+            android:backgroundTint="#333333"
+            android:padding="2dp"
             android:layout_weight="1"
             android:layout_marginStart="2dp" />
 
