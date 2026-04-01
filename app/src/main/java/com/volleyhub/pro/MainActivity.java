@@ -33,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
     
     private TextView scoreAView;
     private TextView scoreBView;
-    private TextView teamANameView;
-    private TextView teamBNameView;
     private TextView timerView;
     private TextView setsView;
     private Button btnAddPointA;
@@ -75,8 +73,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize views
         scoreAView = findViewById(R.id.scoreAView);
         scoreBView = findViewById(R.id.scoreBView);
-        teamANameView = findViewById(R.id.teamANameView);
-        teamBNameView = findViewById(R.id.teamBNameView);
         timerView = findViewById(R.id.timerView);
         setsView = findViewById(R.id.setsView);
         btnAddPointA = findViewById(R.id.btnAddPointA);
@@ -96,6 +92,12 @@ public class MainActivity extends AppCompatActivity {
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
+
+        // Force dark gray tint for control buttons to prevent theme override
+        ColorStateList darkGray = ColorStateList.valueOf(Color.parseColor("#1c1c1c"));
+        btnToggleTimer.setBackgroundTintList(darkGray);
+        btnResetMatch.setBackgroundTintList(darkGray);
+        btnExit.setBackgroundTintList(darkGray);
 
         // Timer handler
         timerHandler = new Handler(Looper.getMainLooper());
@@ -155,8 +157,6 @@ public class MainActivity extends AppCompatActivity {
     private void updateUI(MatchData match) {
         scoreAView.setText(String.valueOf(match.getScoreA()));
         scoreBView.setText(String.valueOf(match.getScoreB()));
-        teamANameView.setText(match.getTeamAName());
-        teamBNameView.setText(match.getTeamBName());
         
         String setInfo = String.format(Locale.getDefault(), "Set %d: %d - %d",
             match.getCurrentSet(), match.getSetsWonA(), match.getSetsWonB());
@@ -169,10 +169,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             int teamAColor = Color.parseColor(teamAColorStr);
             int teamBColor = Color.parseColor(teamBColorStr);
-
-            teamANameView.setTextColor(teamAColor);
+            
             scoreAView.setTextColor(teamAColor);
-            teamBNameView.setTextColor(teamBColor);
             scoreBView.setTextColor(teamBColor);
             
             // Update button backgrounds with team colors
@@ -183,9 +181,7 @@ public class MainActivity extends AppCompatActivity {
             int defaultTeamAColor = Color.parseColor("#00fbff");
             int defaultTeamBColor = Color.parseColor("#ff0055");
             
-            teamANameView.setTextColor(defaultTeamAColor);
             scoreAView.setTextColor(defaultTeamAColor);
-            teamBNameView.setTextColor(defaultTeamBColor);
             scoreBView.setTextColor(defaultTeamBColor);
             
             updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor);
