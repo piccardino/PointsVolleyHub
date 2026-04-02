@@ -36,9 +36,9 @@ public class WearGestureDetector implements SensorEventListener {
     private Handler cooldownHandler;
     
     // Accelerometer thresholds for gesture detection
-    private static final float SHAKE_THRESHOLD = 12.0f;
-    private static final long SHAKE_COOLDOWN = 1000; // ms between shakes
-    private static final long GESTURE_WINDOW = 2000; // ms for double gesture
+    private static final float SHAKE_THRESHOLD = 6.0f;  // Ridotta da 12.0 per wrist flick più sensibile
+    private static final long SHAKE_COOLDOWN = 800; // ms between shakes (ridotto da 1000)
+    private static final long GESTURE_WINDOW = 2500; // ms for double gesture (aumentato da 2000)
     
     private long lastShakeTime = 0;
     private int shakeCount = 0;
@@ -46,7 +46,7 @@ public class WearGestureDetector implements SensorEventListener {
     
     // Pinch gesture detection (air pinch - fingers together without touching screen)
     // When user pinches fingers, there's a subtle wrist twitch
-    private static final float PINCH_TWITCH_THRESHOLD = 8.0f;
+    private static final float PINCH_TWITCH_THRESHOLD = 3.0f;  // Ridotta da 8.0 per più sensibilità
     private static final long PINCH_COOLDOWN = 800; // ms between pinches
     private static final long DOUBLE_PINCH_WINDOW = 1500; // ms for double pinch
     private long lastPinchTime = 0;
@@ -71,6 +71,7 @@ public class WearGestureDetector implements SensorEventListener {
     }
     
     public WearGestureDetector(Context context, GestureListener listener) {
+        Log.d(TAG, "=== WearGestureDetector constructor ===");
         this.context = context;
         this.listener = listener;
         this.cooldownHandler = new Handler(Looper.getMainLooper());
@@ -80,9 +81,21 @@ public class WearGestureDetector implements SensorEventListener {
         
         // Initialize sensor manager
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        Log.d(TAG, "sensorManager obtained: " + (sensorManager != null));
+        
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            Log.d(TAG, "accelerometer: " + (accelerometer != null ? "FOUND" : "NOT FOUND"));
+            
             gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+            Log.d(TAG, "gyroscope: " + (gyroscope != null ? "FOUND" : "NOT FOUND"));
+            
+            // Fallback: if gyroscope not available, use only accelerometer
+            if (gyroscope == null) {
+                Log.d(TAG, "Gyroscope not available on this device, using accelerometer only");
+            }
+        } else {
+            Log.e(TAG, "ERROR: sensorManager is null!");
         }
     }
     
@@ -106,16 +119,36 @@ public class WearGestureDetector implements SensorEventListener {
      * Register sensor listeners - call in onResume()
      */
     public void registerSensorListener() {
-        if (sensorManager != null) {
-            if (accelerometer != null) {
-                // Use fastest rate for gesture detection
-                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-                Log.d(TAG, "Accelerometer listener registered");
+        Log.d(TAG, "=== registerSensorListener called ===");
+        try {
+            if (sensorManager == null) {
+                Log.e(TAG, "ERROR: sensorManager is null!");
+                return;
             }
+            
+            Log.d(TAG, "sensorManager is OK");
+            
+            if (accelerometer == null) {
+                Log.e(TAG, "ERROR: accelerometer is null - device may not have this sensor");
+            } else {
+                Log.d(TAG, "accelerometer found: " + accelerometer.getName());
+                // Use SENSOR_DELAY_UI instead of FASTEST (no special permission needed)
+                boolean registered = sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+                Log.d(TAG, "Accelerometer listener registered: " + registered);
+            }
+            
             if (gyroscope != null) {
-                sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
-                Log.d(TAG, "Gyroscope listener registered");
+                try {
+                    sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_UI);
+                    Log.d(TAG, "Gyroscope listener registered");
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to register gyroscope: " + e.getMessage());
+                }
+            } else {
+                Log.d(TAG, "Gyroscope not available, using accelerometer only");
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error registering sensors: " + e.getMessage(), e);
         }
     }
     
@@ -198,15 +231,23 @@ public class WearGestureDetector implements SensorEventListener {
     }
     
     // ========== SensorEventListener Methods ==========
-    
+
     @Override
     public void onSensorChanged(SensorEvent event) {
-        int sensorType = event.sensor.getType();
+        if (event == null || event.sensor == null) {
+            return;
+        }
         
-        if (sensorType == Sensor.TYPE_ACCELEROMETER) {
-            handleAccelerometerData(event.values);
-        } else if (sensorType == Sensor.TYPE_GYROSCOPE) {
-            handleGyroscopeData(event.values);
+        try {
+            int sensorType = event.sensor.getType();
+
+            if (sensorType == Sensor.TYPE_ACCELEROMETER) {
+                handleAccelerometerData(event.values);
+            } else if (sensorType == Sensor.TYPE_GYROSCOPE) {
+                handleGyroscopeData(event.values);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error processing sensor data: " + e.getMessage(), e);
         }
     }
     
@@ -217,19 +258,23 @@ public class WearGestureDetector implements SensorEventListener {
         float x = values[0];
         float y = values[1];
         float z = values[2];
-        
+
         // Calculate total acceleration (excluding gravity)
         float acceleration = (float) Math.sqrt(x * x + y * y + z * z) - SensorManager.GRAVITY_EARTH;
         
+        // Log per debug - vedi i valori reali dell'accelerometro
+        Log.d(TAG, "Acceleration: " + String.format("%.2f", acceleration) + " m/s²");
+
         // 1. Detect wrist flick (strong movement) - Team B
+        // Priorità al wrist flick se il movimento è forte
         if (Math.abs(acceleration) > SHAKE_THRESHOLD) {
+            Log.d(TAG, "Wrist flick threshold exceeded: " + String.format("%.2f", acceleration));
             handleWristFlick();
         }
-        
         // 2. Detect subtle "air pinch" twitch - Team A
-        // When user pinches fingers together, there's a small wrist twitch (3-8 m/s²)
-        else if (Math.abs(acceleration) > PINCH_TWITCH_THRESHOLD && 
-                 Math.abs(acceleration) < SHAKE_THRESHOLD) {
+        // Solo se non siamo in un wrist flick e il movimento è nella fascia giusta
+        else if (Math.abs(acceleration) > PINCH_TWITCH_THRESHOLD && !inPinchGesture) {
+            Log.d(TAG, "Air pinch threshold exceeded: " + String.format("%.2f", acceleration));
             handleAirPinch(acceleration);
         }
     }
@@ -257,14 +302,25 @@ public class WearGestureDetector implements SensorEventListener {
      */
     private void handleWristFlick() {
         long currentTime = System.currentTimeMillis();
+        long timeSinceLastShake = currentTime - lastShakeTime;
         
-        if (currentTime - lastShakeTime < SHAKE_COOLDOWN) {
+        // Primo flick o nuovo gesto
+        if (timeSinceLastShake > SHAKE_COOLDOWN) {
+            // Reset per nuovo gesto
+            if (shakeCount > 0) {
+                Log.d(TAG, "Wrist flick timeout - resetting count");
+            }
+            shakeCount = 1;
+            firstShakeTime = currentTime;
+            Log.d(TAG, "First wrist flick detected");
+        }
+        // Secondo flick entro il tempo limite
+        else if (timeSinceLastShake <= SHAKE_COOLDOWN && timeSinceLastShake > 100) {
             shakeCount++;
+            Log.d(TAG, "Second wrist flick detected! Count: " + shakeCount);
             
-            if (shakeCount == 1) {
-                firstShakeTime = currentTime;
-            } else if (shakeCount >= 2 && currentTime - firstShakeTime < GESTURE_WINDOW) {
-                Log.d(TAG, "Double wrist flick detected - Team B point!");
+            if (shakeCount >= 2 && currentTime - firstShakeTime < GESTURE_WINDOW) {
+                Log.d(TAG, "✓ Double wrist flick completed - Team B point!");
                 if (!isCooldownActive()) {
                     listener.onTeamBPoint();
                     triggerCooldown();
@@ -274,9 +330,6 @@ public class WearGestureDetector implements SensorEventListener {
                 shakeCount = 0;
                 firstShakeTime = 0;
             }
-        } else {
-            shakeCount = 1;
-            firstShakeTime = currentTime;
         }
         
         lastShakeTime = currentTime;

@@ -320,9 +320,13 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "=== onResume called ===");
         // Register sensor listener for gesture detection
         if (gestureDetector != null) {
+            Log.d(TAG, "gestureDetector is not null, registering sensors");
             gestureDetector.registerSensorListener();
+        } else {
+            Log.e(TAG, "ERROR: gestureDetector is null in onResume!");
         }
     }
 

@@ -7,7 +7,9 @@
       "Bash(move-item *)",
       "Bash($env:java_home *)",
       "Bash(set *)",
-      "Bash(dir *)"
+      "Bash(dir *)",
+      "Bash(adb *)",
+      "Bash(findstr *)"
     ]
   },
   "$version": 3
