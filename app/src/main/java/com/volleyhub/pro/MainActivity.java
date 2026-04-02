@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -23,14 +24,14 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements WearGestureDetector.GestureListener {
     private static final String TAG = "MainActivity";
     private static final long UPDATE_INTERVAL = 1000; // 1 second
-    
+
     private FirebaseAuth mAuth;
     private DatabaseReference mMatchRef;
     private ValueEventListener mMatchListener;
-    
+
     private TextView scoreAView;
     private TextView scoreBView;
     private TextView timerView;
@@ -42,12 +43,14 @@ public class MainActivity extends AppCompatActivity {
     private Button btnToggleTimer;
     private Button btnResetMatch;
     private Button btnExit;
-    
+
     private Handler timerHandler;
     private Runnable timerRunnable;
     private boolean isTimerRunning = false;
     private long elapsedTime = 0;
     private long lastUpdateTime;
+    
+    private WearGestureDetector gestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
+
+        // Initialize gesture detector for Wear OS
+        gestureDetector = new WearGestureDetector(this, this);
 
         // Force dark gray tint for control buttons to prevent theme override
         ColorStateList darkGray = ColorStateList.valueOf(Color.parseColor("#1c1c1c"));
@@ -312,6 +318,24 @@ public class MainActivity extends AppCompatActivity {
     }
     
     @Override
+    protected void onResume() {
+        super.onResume();
+        // Register sensor listener for gesture detection
+        if (gestureDetector != null) {
+            gestureDetector.registerSensorListener();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Unregister sensor listener to save battery
+        if (gestureDetector != null) {
+            gestureDetector.unregisterSensorListener();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (timerHandler != null) {
@@ -320,5 +344,71 @@ public class MainActivity extends AppCompatActivity {
         if (mMatchListener != null) {
             mMatchRef.removeEventListener(mMatchListener);
         }
+        if (gestureDetector != null) {
+            gestureDetector.unregisterSensorListener();
+        }
+    }
+    
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // Pass touch events to gesture detector
+        if (gestureDetector != null) {
+            return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
+        }
+        return super.onTouchEvent(event);
+    }
+    
+    @Override
+    public void onTeamAPoint() {
+        // Gesture detected - Add point to Team A
+        Log.d(TAG, "Team A point gesture detected");
+        updateScore(true, true);
+        showGestureFeedback("Team A +1", scoreAView);
+    }
+    
+    @Override
+    public void onTeamBPoint() {
+        // Gesture detected - Add point to Team B
+        Log.d(TAG, "Team B point gesture detected");
+        updateScore(true, false);
+        showGestureFeedback("Team B +1", scoreBView);
+    }
+    
+    /**
+     * Show visual feedback when a gesture is recognized
+     * @param message Message to display
+     * @param targetView View to highlight
+     */
+    private void showGestureFeedback(String message, TextView targetView) {
+        // Flash the target view
+        int originalColor = targetView.getCurrentTextColor();
+        int flashColor = Color.WHITE;
+        
+        targetView.setTextColor(flashColor);
+        
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> {
+            // Restore original color based on team
+            if (targetView == scoreAView) {
+                try {
+                    String teamAColorStr = "#00fbff";
+                    targetView.setTextColor(Color.parseColor(teamAColorStr));
+                } catch (Exception e) {
+                    targetView.setTextColor(originalColor);
+                }
+            } else if (targetView == scoreBView) {
+                try {
+                    String teamBColorStr = "#ff0055";
+                    targetView.setTextColor(Color.parseColor(teamBColorStr));
+                } catch (Exception e) {
+                    targetView.setTextColor(originalColor);
+                }
+            } else {
+                targetView.setTextColor(originalColor);
+            }
+        }, 300);
+        
+        // Show toast feedback
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }
