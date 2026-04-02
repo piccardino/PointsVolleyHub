@@ -37,6 +37,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Gestures Blocked Icon (centered, small) -->
+    <ImageView
+        android:id="@+id/gesturesBlockedIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@android:drawable/ic_lock_lock"
+        android:contentDescription="Gestures Blocked"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/setsView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginTop="4dp" />
+
     <!-- Team A Section -->
     <LinearLayout
         android:id="@+id/teamASection"

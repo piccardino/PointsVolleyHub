@@ -7,8 +7,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
     private TextView scoreBView;
     private TextView timerView;
     private TextView setsView;
+    private ImageView gesturesBlockedIcon;  // Iconcina blocco gesti
     private Button btnAddPointA;
     private Button btnRemovePointA;
     private Button btnAddPointB;
@@ -50,6 +53,9 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
     private long elapsedTime = 0;
     private long lastUpdateTime;
     
+    private boolean gesturesBlocked = false;  // Stato blocco gesti
+    private long lastTimerTapTime = 0;  // Per rilevare doppio tap sul timer
+
     private WearGestureDetector gestureDetector;
 
     @Override
@@ -78,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         scoreBView = findViewById(R.id.scoreBView);
         timerView = findViewById(R.id.timerView);
         setsView = findViewById(R.id.setsView);
+        gesturesBlockedIcon = findViewById(R.id.gesturesBlockedIcon);  // Iconcina blocco
         btnAddPointA = findViewById(R.id.btnAddPointA);
         btnRemovePointA = findViewById(R.id.btnRemovePointA);
         btnAddPointB = findViewById(R.id.btnAddPointB);
@@ -95,6 +102,19 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
+        
+        // Double tap sul timer per bloccare/sbloccare gesti
+        timerView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastTimerTapTime < 300) {
+                    // Doppio tap rilevato!
+                    toggleGesturesBlock();
+                }
+                lastTimerTapTime = currentTime;
+            }
+            return true;
+        });
 
         // Initialize gesture detector for Wear OS
         gestureDetector = new WearGestureDetector(this, this);
@@ -369,13 +389,34 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         updateScore(true, true);
         showGestureFeedback("Team A +1", scoreAView);
     }
-    
+
     @Override
     public void onTeamBPoint() {
         // Gesture detected - Add point to Team B
         Log.d(TAG, "Team B point gesture detected");
         updateScore(true, false);
         showGestureFeedback("Team B +1", scoreBView);
+    }
+    
+    /**
+     * Toggle gestures block on/off with double tap on timer
+     */
+    private void toggleGesturesBlock() {
+        gesturesBlocked = !gesturesBlocked;
+        
+        if (gesturesBlocked) {
+            // Blocca i gesti
+            gestureDetector.setGesturesEnabled(false);
+            gesturesBlockedIcon.setVisibility(View.VISIBLE);
+            Toast.makeText(this, "Gesti BLOCCATI 🔒", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Gestures BLOCKED");
+        } else {
+            // Sblocca i gesti
+            gestureDetector.setGesturesEnabled(true);
+            gesturesBlockedIcon.setVisibility(View.GONE);
+            Toast.makeText(this, "Gesti SBLOCCATI 🔓", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Gestures UNBLOCKED");
+        }
     }
     
     /**

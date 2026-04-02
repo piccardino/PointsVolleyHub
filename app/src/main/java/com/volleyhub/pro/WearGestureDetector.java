@@ -30,29 +30,45 @@ public class WearGestureDetector implements SensorEventListener {
     
     private GestureListener listener;
     
-    // Cooldown globale tra i punti (5 secondi)
-    private static final long POINT_COOLDOWN = 5000; // 5 secondi
+    // Cooldown globale tra i punti (2 secondi)
+    private static final long POINT_COOLDOWN = 2000; // 2 secondi
     private long lastPointTime = 0;
     private Handler cooldownHandler;
     
-    // Accelerometer thresholds for gesture detection
-    private static final float SHAKE_THRESHOLD = 6.0f;  // Ridotta da 12.0 per wrist flick più sensibile
-    private static final long SHAKE_COOLDOWN = 800; // ms between shakes (ridotto da 1000)
-    private static final long GESTURE_WINDOW = 2500; // ms for double gesture (aumentato da 2000)
+    // GESTI BLOCCATI/SBLOCCATI
+    private boolean gesturesEnabled = true;
+    
+    // Accelerometer thresholds for gesture detection - ALTA SENSIBILITA'
+    private static final float SHAKE_THRESHOLD = 4.0f;  // RIDOTTA da 6.0 per più sensibilità
+    private static final long SHAKE_COOLDOWN = 600; // ms between shakes (RIDOTTO)
+    private static final long GESTURE_WINDOW = 2500; // ms for double gesture
     
     private long lastShakeTime = 0;
     private int shakeCount = 0;
     private long firstShakeTime = 0;
     
-    // Pinch gesture detection (air pinch - fingers together without touching screen)
-    // When user pinches fingers, there's a subtle wrist twitch
-    private static final float PINCH_TWITCH_THRESHOLD = 3.0f;  // Ridotta da 8.0 per più sensibilità
-    private static final long PINCH_COOLDOWN = 800; // ms between pinches
-    private static final long DOUBLE_PINCH_WINDOW = 1500; // ms for double pinch
+    // Pinch gesture detection - ALTA SENSIBILITA'
+    private static final float PINCH_TWITCH_THRESHOLD = 1.0f;  // RIDOTTA da 1.5 per più sensibilità
+    private static final float PINCH_MAX_THRESHOLD = 6.0f;     // AUMENTATA per accettare più movimenti
+    private static final long PINCH_COOLDOWN = 300; // ms between pinches (RIDOTTO)
+    private static final long DOUBLE_PINCH_WINDOW = 2000; // ms for double pinch (AUMENTATO)
+    private static final long PINCH_RESET_TIMEOUT = 3000; // ms after which pinch count resets (AUMENTATO)
     private long lastPinchTime = 0;
     private int pinchCount = 0;
     private long firstPinchTime = 0;
     private boolean inPinchGesture = false;
+    
+    // Gyro threshold - più tolleranza
+    private static final float PINCH_MAX_GYRO = 4.0f;  // rad/s - AUMENTATO da 3.5
+    
+    // Low-pass filter for smoothing accelerometer data (wowMouse style)
+    private static final float FILTER_ALPHA = 0.5f;  // Aumentato da 0.3 per meno smoothing
+    private float[] filteredAcceleration = new float[3];
+    private boolean filterInitialized = false;
+    
+    // Track recent gyro rotation to distinguish gestures
+    private float recentGyroRotation = 0;
+    private long lastGyroTime = 0;
     
     // Touch gesture thresholds
     private static final float SWIPE_THRESHOLD = 50f;
@@ -97,6 +113,21 @@ public class WearGestureDetector implements SensorEventListener {
         } else {
             Log.e(TAG, "ERROR: sensorManager is null!");
         }
+    }
+    
+    /**
+     * Enable or disable gesture detection
+     */
+    public void setGesturesEnabled(boolean enabled) {
+        gesturesEnabled = enabled;
+        Log.d(TAG, "Gestures " + (enabled ? "ENABLED" : "DISABLED"));
+    }
+    
+    /**
+     * Check if gestures are enabled
+     */
+    public boolean isGesturesEnabled() {
+        return gesturesEnabled;
     }
     
     /**
@@ -253,47 +284,82 @@ public class WearGestureDetector implements SensorEventListener {
     
     /**
      * Handle accelerometer data for wrist flick and air pinch detection
+     * Uses low-pass filter (wowMouse style) for noise reduction
      */
     private void handleAccelerometerData(float[] values) {
+        // BLOCK all gestures if disabled
+        if (!gesturesEnabled) {
+            return;
+        }
+        
         float x = values[0];
         float y = values[1];
         float z = values[2];
 
-        // Calculate total acceleration (excluding gravity)
-        float acceleration = (float) Math.sqrt(x * x + y * y + z * z) - SensorManager.GRAVITY_EARTH;
+        // Apply low-pass filter to reduce noise (wowMouse algorithm)
+        if (!filterInitialized) {
+            filteredAcceleration[0] = x;
+            filteredAcceleration[1] = y;
+            filteredAcceleration[2] = z;
+            filterInitialized = true;
+        } else {
+            filteredAcceleration[0] = FILTER_ALPHA * x + (1 - FILTER_ALPHA) * filteredAcceleration[0];
+            filteredAcceleration[1] = FILTER_ALPHA * y + (1 - FILTER_ALPHA) * filteredAcceleration[1];
+            filteredAcceleration[2] = FILTER_ALPHA * z + (1 - FILTER_ALPHA) * filteredAcceleration[2];
+        }
         
-        // Log per debug - vedi i valori reali dell'accelerometro
-        Log.d(TAG, "Acceleration: " + String.format("%.2f", acceleration) + " m/s²");
+        // Calculate total acceleration (excluding gravity) using filtered values
+        float filteredX = filteredAcceleration[0];
+        float filteredY = filteredAcceleration[1];
+        float filteredZ = filteredAcceleration[2];
+        
+        float acceleration = (float) Math.sqrt(
+            filteredX * filteredX + 
+            filteredY * filteredY + 
+            filteredZ * filteredZ
+        ) - SensorManager.GRAVITY_EARTH;
+        
+        // Log SEMPRE i valori per debug
+        Log.d(TAG, "Accel: " + String.format(java.util.Locale.US, "%.2f", acceleration) + " m/s²");
 
         // 1. Detect wrist flick (strong movement) - Team B
-        // Priorità al wrist flick se il movimento è forte
         if (Math.abs(acceleration) > SHAKE_THRESHOLD) {
-            Log.d(TAG, "Wrist flick threshold exceeded: " + String.format("%.2f", acceleration));
+            Log.d(TAG, ">>> Wrist flick: " + String.format(java.util.Locale.US, "%.2f", acceleration));
             handleWristFlick();
         }
         // 2. Detect subtle "air pinch" twitch - Team A
-        // Solo se non siamo in un wrist flick e il movimento è nella fascia giusta
         else if (Math.abs(acceleration) > PINCH_TWITCH_THRESHOLD && !inPinchGesture) {
-            Log.d(TAG, "Air pinch threshold exceeded: " + String.format("%.2f", acceleration));
+            Log.d(TAG, ">>> Potential air pinch: " + String.format(java.util.Locale.US, "%.2f", acceleration));
             handleAirPinch(acceleration);
         }
     }
     
     /**
      * Handle gyroscope data for rotation detection
+     * wowMouse uses gyroscope to detect subtle rotation during pinch
      */
     private void handleGyroscopeData(float[] values) {
+        // Calculate angular velocity
         float angularVelocity = (float) Math.sqrt(
-            values[0] * values[0] + 
-            values[1] * values[1] + 
+            values[0] * values[0] +
+            values[1] * values[1] +
             values[2] * values[2]
         );
         
-        // Gyroscope can help detect the rotation component of a pinch gesture
-        // When pinching, there's often a small inward rotation
-        if (angularVelocity > 2.0f && angularVelocity < 10.0f) {
-            // Potential pinch rotation detected
-            // We combine this with accelerometer data for better accuracy
+        // Store recent gyro rotation for gesture differentiation
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastGyroTime < 500) {
+            // Keep max rotation in last 500ms
+            recentGyroRotation = Math.max(recentGyroRotation, angularVelocity);
+        } else {
+            recentGyroRotation = angularVelocity;
+        }
+        lastGyroTime = currentTime;
+
+        // When pinching, there's often a small inward wrist rotation (1-3 rad/s)
+        // Wrist flick has higher rotation (3+ rad/s)
+        if (angularVelocity > 1.0f && angularVelocity < 8.0f) {
+            Log.d(TAG, "Gyro: " + String.format(java.util.Locale.US, "%.2f", angularVelocity) + " rad/s");
         }
     }
     
@@ -303,7 +369,7 @@ public class WearGestureDetector implements SensorEventListener {
     private void handleWristFlick() {
         long currentTime = System.currentTimeMillis();
         long timeSinceLastShake = currentTime - lastShakeTime;
-        
+
         // Primo flick o nuovo gesto
         if (timeSinceLastShake > SHAKE_COOLDOWN) {
             // Reset per nuovo gesto
@@ -318,7 +384,7 @@ public class WearGestureDetector implements SensorEventListener {
         else if (timeSinceLastShake <= SHAKE_COOLDOWN && timeSinceLastShake > 100) {
             shakeCount++;
             Log.d(TAG, "Second wrist flick detected! Count: " + shakeCount);
-            
+
             if (shakeCount >= 2 && currentTime - firstShakeTime < GESTURE_WINDOW) {
                 Log.d(TAG, "✓ Double wrist flick completed - Team B point!");
                 if (!isCooldownActive()) {
@@ -331,37 +397,74 @@ public class WearGestureDetector implements SensorEventListener {
                 firstShakeTime = 0;
             }
         }
-        
+
         lastShakeTime = currentTime;
+        
+        // Reset gyro rotation after wrist flick to avoid affecting pinch detection
+        cooldownHandler.postDelayed(() -> {
+            recentGyroRotation = 0;
+            Log.d(TAG, "[handleWristFlick] Reset gyro rotation");
+        }, 500);
     }
     
     /**
      * Detect "air pinch" gesture for Team A point
-     * This tries to detect the subtle wrist movement when user pinches fingers
+     * Based on wowMouse algorithm - detects sharp wrist twitch when fingers pinch together
+     * Uses gyroscope to reject wrist flicks (which have high rotation)
      */
     private void handleAirPinch(float acceleration) {
+        long currentTime = System.currentTimeMillis();
+        float absAcceleration = Math.abs(acceleration);
+        
+        Log.d(TAG, "[handleAirPinch] accel=" + String.format(java.util.Locale.US, "%.2f", absAcceleration));
+        Log.d(TAG, "[handleAirPinch] recentGyro=" + String.format(java.util.Locale.US, "%.2f", recentGyroRotation));
+        Log.d(TAG, "[handleAirPinch] time since lastShake=" + (currentTime - lastShakeTime));
+        Log.d(TAG, "[handleAirPinch] time since lastPinch=" + (currentTime - lastPinchTime));
+        
+        // REJECT if acceleration is too high (it's a wrist flick, not a pinch)
+        if (absAcceleration > PINCH_MAX_THRESHOLD) {
+            Log.d(TAG, "[handleAirPinch] REJECTED: acceleration too high (wrist flick)");
+            return;
+        }
+        
+        // REJECT if gyro rotation is too high (it's a wrist flick, not a pinch)
+        if (recentGyroRotation > PINCH_MAX_GYRO) {
+            Log.d(TAG, "[handleAirPinch] REJECTED: gyro rotation too high (wrist flick) - " + 
+                String.format(java.util.Locale.US, "%.2f", recentGyroRotation) + " rad/s");
+            return;
+        }
+        
         // Avoid duplicate detection during an ongoing gesture
         if (inPinchGesture) {
+            Log.d(TAG, "[handleAirPinch] BLOCKED: inPinchGesture is true");
             return;
         }
-        
-        long currentTime = System.currentTimeMillis();
-        
-        // Check if we're not in a regular shake gesture
-        if (currentTime - lastShakeTime < 500) {
+
+        // Check if we're not in a regular shake gesture (avoid false positives)
+        if (currentTime - lastShakeTime < 300) {
+            Log.d(TAG, "[handleAirPinch] BLOCKED: too close to wrist flick");
             return;
         }
-        
-        // Detect the twitch pattern of a pinch
+
+        // Check if too much time passed since first pinch (timeout)
+        if (pinchCount == 1 && currentTime - firstPinchTime > PINCH_RESET_TIMEOUT) {
+            Log.d(TAG, "[handleAirPinch] TIMEOUT - resetting pinch count");
+            pinchCount = 0;
+            firstPinchTime = 0;
+        }
+
+        // Validate the pinch pattern: should be a sharp, quick twitch
         if (currentTime - lastPinchTime > PINCH_COOLDOWN) {
             pinchCount++;
             inPinchGesture = true;
+
+            Log.d(TAG, "[handleAirPinch] Pinch count: " + pinchCount);
             
             if (pinchCount == 1) {
                 firstPinchTime = currentTime;
-                Log.d(TAG, "Air pinch detected (1/2). Waiting for second pinch...");
+                Log.d(TAG, "✋ Air pinch detected (1/2). Waiting for second pinch...");
             } else if (pinchCount >= 2 && currentTime - firstPinchTime < DOUBLE_PINCH_WINDOW) {
-                Log.d(TAG, "DOUBLE AIR PINCH detected - Team A point!");
+                Log.d(TAG, "👌 DOUBLE AIR PINCH detected - Team A point!");
                 if (!isCooldownActive()) {
                     listener.onTeamAPoint();
                     triggerCooldown();
@@ -370,14 +473,27 @@ public class WearGestureDetector implements SensorEventListener {
                 }
                 pinchCount = 0;
                 firstPinchTime = 0;
+            } else if (pinchCount >= 2) {
+                Log.d(TAG, "✋ Pinch timeout - resetting (took too long: " + (currentTime - firstPinchTime) + "ms)");
+                pinchCount = 1;
+                firstPinchTime = currentTime;
             }
-            
+
             lastPinchTime = currentTime;
-            
-            // Reset pinch detection state
+
+            // Reset pinch detection state after cooldown
             cooldownHandler.postDelayed(() -> {
                 inPinchGesture = false;
+                Log.d(TAG, "[handleAirPinch] Reset inPinchGesture to false");
+            }, PINCH_COOLDOWN);
+            
+            // Reset gyro rotation after pinch to avoid affecting next detection
+            cooldownHandler.postDelayed(() -> {
+                recentGyroRotation = 0;
+                Log.d(TAG, "[handleAirPinch] Reset gyro rotation");
             }, 500);
+        } else {
+            Log.d(TAG, "[handleAirPinch] BLOCKED: cooldown active (" + (currentTime - lastPinchTime) + "ms)");
         }
     }
     
