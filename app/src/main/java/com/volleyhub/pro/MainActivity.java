@@ -6,16 +6,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -26,9 +22,9 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements WearGestureDetector.GestureListener {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private static final long UPDATE_INTERVAL = 1000; // 1 second
+    private static final long UPDATE_INTERVAL = 1000;
 
     private FirebaseAuth mAuth;
     private DatabaseReference mMatchRef;
@@ -38,7 +34,6 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
     private TextView scoreBView;
     private TextView timerView;
     private TextView setsView;
-    private ImageView gesturesBlockedIcon;  // Iconcina blocco gesti
     private Button btnAddPointA;
     private Button btnRemovePointA;
     private Button btnAddPointB;
@@ -52,39 +47,29 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
     private boolean isTimerRunning = false;
     private long elapsedTime = 0;
     private long lastUpdateTime;
-    
-    private boolean gesturesBlocked = false;  // Stato blocco gesti
-    private long lastTimerTapTime = 0;  // Per rilevare doppio tap sul timer
-
-    private WearGestureDetector gestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Keep screen on for Wear OS
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         setContentView(R.layout.activity_main);
 
-        // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
             Log.e(TAG, "No user logged in, finishing MainActivity");
             finish();
             return;
         }
+
         String userId = mAuth.getCurrentUser().getUid();
-        // Use same path structure as live-match.html: users/{uid}/matchData/liveMatchProgress_index
         mMatchRef = FirebaseDatabase.getInstance().getReference()
             .child("users").child(userId).child("matchData").child("liveMatchProgress_index");
 
-        // Initialize views
         scoreAView = findViewById(R.id.scoreAView);
         scoreBView = findViewById(R.id.scoreBView);
         timerView = findViewById(R.id.timerView);
         setsView = findViewById(R.id.setsView);
-        gesturesBlockedIcon = findViewById(R.id.gesturesBlockedIcon);  // Iconcina blocco
         btnAddPointA = findViewById(R.id.btnAddPointA);
         btnRemovePointA = findViewById(R.id.btnRemovePointA);
         btnAddPointB = findViewById(R.id.btnAddPointB);
@@ -93,39 +78,19 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         btnResetMatch = findViewById(R.id.btnResetMatch);
         btnExit = findViewById(R.id.btnExit);
 
-        // Setup button listeners
         btnAddPointA.setOnClickListener(v -> updateScore(true, true));
         btnRemovePointA.setOnClickListener(v -> updateScore(false, true));
         btnAddPointB.setOnClickListener(v -> updateScore(true, false));
         btnRemovePointB.setOnClickListener(v -> updateScore(false, false));
-
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
-        
-        // Double tap sul timer per bloccare/sbloccare gesti
-        timerView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastTimerTapTime < 300) {
-                    // Doppio tap rilevato!
-                    toggleGesturesBlock();
-                }
-                lastTimerTapTime = currentTime;
-            }
-            return true;
-        });
 
-        // Initialize gesture detector for Wear OS
-        gestureDetector = new WearGestureDetector(this, this);
-
-        // Force dark gray tint for control buttons to prevent theme override
         ColorStateList darkGray = ColorStateList.valueOf(Color.parseColor("#1c1c1c"));
         btnToggleTimer.setBackgroundTintList(darkGray);
         btnResetMatch.setBackgroundTintList(darkGray);
         btnExit.setBackgroundTintList(darkGray);
 
-        // Timer handler
         timerHandler = new Handler(Looper.getMainLooper());
         timerRunnable = new Runnable() {
             @Override
@@ -137,7 +102,6 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
             }
         };
 
-        // Initialize match data if not exists, then listen for updates
         initializeMatchDataIfNeeded();
         setupFirebaseListener();
     }
@@ -146,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         mMatchRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 if (!task.getResult().exists()) {
-                    // Initialize with default values including colors
                     MatchData initialData = new MatchData("Team A", "Team B", "#00fbff", "#ff0055");
                     mMatchRef.setValue(initialData);
                 }
@@ -155,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
             }
         });
     }
-    
+
     private void setupFirebaseListener() {
         mMatchListener = new ValueEventListener() {
             @Override
@@ -166,7 +129,6 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
                         updateUI(match);
                     }
                 } else {
-                    // Data doesn't exist yet - will be initialized by initializeMatchDataIfNeeded()
                     Log.d(TAG, "Match data not yet initialized");
                 }
             }
@@ -179,37 +141,35 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         };
         mMatchRef.addValueEventListener(mMatchListener);
     }
-    
+
     private void updateUI(MatchData match) {
         scoreAView.setText(String.valueOf(match.getScoreA()));
         scoreBView.setText(String.valueOf(match.getScoreB()));
-        
-        String setInfo = String.format(Locale.getDefault(), "Set %d: %d - %d",
-            match.getCurrentSet(), match.getSetsWonA(), match.getSetsWonB());
+
+        String setInfo = String.format(
+            Locale.getDefault(),
+            "Set %d: %d - %d",
+            match.getCurrentSet(),
+            match.getSetsWonA(),
+            match.getSetsWonB()
+        );
         setsView.setText(setInfo);
 
-        // Get team colors with fallback to defaults
         String teamAColorStr = match.getTeamAColor();
         String teamBColorStr = match.getTeamBColor();
-        
+
         try {
             int teamAColor = Color.parseColor(teamAColorStr);
             int teamBColor = Color.parseColor(teamBColorStr);
-            
             scoreAView.setTextColor(teamAColor);
             scoreBView.setTextColor(teamBColor);
-            
-            // Update button backgrounds with team colors
             updateButtonBackgrounds(teamAColor, teamBColor);
         } catch (IllegalArgumentException e) {
-            // Fallback to default colors if parsing fails
             Log.w(TAG, "Invalid color format, using defaults", e);
             int defaultTeamAColor = Color.parseColor("#00fbff");
             int defaultTeamBColor = Color.parseColor("#ff0055");
-            
             scoreAView.setTextColor(defaultTeamAColor);
             scoreBView.setTextColor(defaultTeamBColor);
-            
             updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor);
         }
 
@@ -222,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         if (isTimerRunning && timerHandler != null) {
             timerHandler.removeCallbacks(timerRunnable);
             timerHandler.post(timerRunnable);
-        } else {
+        } else if (timerHandler != null) {
             timerHandler.removeCallbacks(timerRunnable);
         }
 
@@ -232,44 +192,56 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
     private void updateButtonBackgrounds(int teamAColor, int teamBColor) {
         ColorStateList cslA = ColorStateList.valueOf(teamAColor);
         ColorStateList cslB = ColorStateList.valueOf(teamBColor);
-        
-        if (btnAddPointA != null) btnAddPointA.setBackgroundTintList(cslA);
-        if (btnRemovePointA != null) btnRemovePointA.setBackgroundTintList(cslA);
-        if (btnAddPointB != null) btnAddPointB.setBackgroundTintList(cslB);
-        if (btnRemovePointB != null) btnRemovePointB.setBackgroundTintList(cslB);
+
+        if (btnAddPointA != null) {
+            btnAddPointA.setBackgroundTintList(cslA);
+        }
+        if (btnRemovePointA != null) {
+            btnRemovePointA.setBackgroundTintList(cslA);
+        }
+        if (btnAddPointB != null) {
+            btnAddPointB.setBackgroundTintList(cslB);
+        }
+        if (btnRemovePointB != null) {
+            btnRemovePointB.setBackgroundTintList(cslB);
+        }
     }
-    
+
     private void updateScore(boolean add, boolean teamA) {
         mMatchRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 MatchData match = task.getResult().getValue(MatchData.class);
                 if (match != null) {
                     if (teamA) {
-                        if (add) match.addPointA();
-                        else match.removePointA();
+                        if (add) {
+                            match.addPointA();
+                        } else {
+                            match.removePointA();
+                        }
                     } else {
-                        if (add) match.addPointB();
-                        else match.removePointB();
+                        if (add) {
+                            match.addPointB();
+                        } else {
+                            match.removePointB();
+                        }
                     }
                     mMatchRef.setValue(match);
                 }
             }
         });
     }
-    
+
     private void toggleTimer() {
         mMatchRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 MatchData match = task.getResult().getValue(MatchData.class);
                 if (match != null) {
                     if (!match.isTimerIsPaused()) {
-                        // Stop timer - add elapsed time
                         long currentTime = System.currentTimeMillis();
                         long sessionTimeSeconds = (currentTime - match.getTimerLastStartedAt()) / 1000;
                         match.setTimerAccumulatedSeconds(match.getTimerAccumulatedSeconds() + sessionTimeSeconds);
                         match.setTimerIsPaused(true);
                     } else {
-                        // Start timer
                         match.setTimerLastStartedAt(System.currentTimeMillis());
                         match.setTimerIsPaused(false);
                     }
@@ -278,27 +250,27 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
             }
         });
     }
-    
+
     private void updateTimerDisplay() {
         long currentDisplayTime = elapsedTime;
         if (isTimerRunning) {
             currentDisplayTime += (System.currentTimeMillis() - lastUpdateTime);
         }
-        
+
         long seconds = (currentDisplayTime / 1000) % 60;
         long minutes = (currentDisplayTime / (1000 * 60)) % 60;
         long hours = currentDisplayTime / (1000 * 60 * 60);
-        
+
         String timeString;
         if (hours > 0) {
             timeString = String.format(Locale.getDefault(), "%d:%02d:%02d", hours, minutes, seconds);
         } else {
             timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
         }
-        
+
         timerView.setText(timeString);
     }
-    
+
     private void updateTimerButton() {
         if (isTimerRunning) {
             btnToggleTimer.setText("STOP");
@@ -308,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
             btnToggleTimer.setBackgroundResource(R.drawable.button_start_flat);
         }
     }
-    
+
     private void resetMatch() {
         mMatchRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
@@ -327,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
             }
         });
     }
-    
+
     private void logout() {
         if (timerHandler != null) {
             timerHandler.removeCallbacks(timerRunnable);
@@ -335,28 +307,6 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         mMatchRef.removeEventListener(mMatchListener);
         mAuth.signOut();
         finish();
-    }
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "=== onResume called ===");
-        // Register sensor listener for gesture detection
-        if (gestureDetector != null) {
-            Log.d(TAG, "gestureDetector is not null, registering sensors");
-            gestureDetector.registerSensorListener();
-        } else {
-            Log.e(TAG, "ERROR: gestureDetector is null in onResume!");
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        // Unregister sensor listener to save battery
-        if (gestureDetector != null) {
-            gestureDetector.unregisterSensorListener();
-        }
     }
 
     @Override
@@ -368,92 +318,5 @@ public class MainActivity extends AppCompatActivity implements WearGestureDetect
         if (mMatchListener != null) {
             mMatchRef.removeEventListener(mMatchListener);
         }
-        if (gestureDetector != null) {
-            gestureDetector.unregisterSensorListener();
-        }
-    }
-    
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // Pass touch events to gesture detector
-        if (gestureDetector != null) {
-            return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
-        }
-        return super.onTouchEvent(event);
-    }
-    
-    @Override
-    public void onTeamAPoint() {
-        // Gesture detected - Add point to Team A
-        Log.d(TAG, "Team A point gesture detected");
-        updateScore(true, true);
-        showGestureFeedback("Team A +1", scoreAView);
-    }
-
-    @Override
-    public void onTeamBPoint() {
-        // Gesture detected - Add point to Team B
-        Log.d(TAG, "Team B point gesture detected");
-        updateScore(true, false);
-        showGestureFeedback("Team B +1", scoreBView);
-    }
-    
-    /**
-     * Toggle gestures block on/off with double tap on timer
-     */
-    private void toggleGesturesBlock() {
-        gesturesBlocked = !gesturesBlocked;
-        
-        if (gesturesBlocked) {
-            // Blocca i gesti
-            gestureDetector.setGesturesEnabled(false);
-            gesturesBlockedIcon.setVisibility(View.VISIBLE);
-            Toast.makeText(this, "Gesti BLOCCATI 🔒", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Gestures BLOCKED");
-        } else {
-            // Sblocca i gesti
-            gestureDetector.setGesturesEnabled(true);
-            gesturesBlockedIcon.setVisibility(View.GONE);
-            Toast.makeText(this, "Gesti SBLOCCATI 🔓", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Gestures UNBLOCKED");
-        }
-    }
-    
-    /**
-     * Show visual feedback when a gesture is recognized
-     * @param message Message to display
-     * @param targetView View to highlight
-     */
-    private void showGestureFeedback(String message, TextView targetView) {
-        // Flash the target view
-        int originalColor = targetView.getCurrentTextColor();
-        int flashColor = Color.WHITE;
-        
-        targetView.setTextColor(flashColor);
-        
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(() -> {
-            // Restore original color based on team
-            if (targetView == scoreAView) {
-                try {
-                    String teamAColorStr = "#00fbff";
-                    targetView.setTextColor(Color.parseColor(teamAColorStr));
-                } catch (Exception e) {
-                    targetView.setTextColor(originalColor);
-                }
-            } else if (targetView == scoreBView) {
-                try {
-                    String teamBColorStr = "#ff0055";
-                    targetView.setTextColor(Color.parseColor(teamBColorStr));
-                } catch (Exception e) {
-                    targetView.setTextColor(originalColor);
-                }
-            } else {
-                targetView.setTextColor(originalColor);
-            }
-        }, 300);
-        
-        // Show toast feedback
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

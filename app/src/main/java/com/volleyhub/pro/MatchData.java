@@ -4,6 +4,12 @@ import com.google.firebase.database.IgnoreExtraProperties;
 
 @IgnoreExtraProperties
 public class MatchData {
+    private static final int POINTS_TO_WIN_REGULAR_SET = 25;
+    private static final int POINTS_TO_WIN_TIEBREAK_SET = 15;
+    private static final int SETS_TO_WIN_MATCH = 3;
+    private static final int FINAL_SET_NUMBER = 5;
+    private static final int MIN_WIN_MARGIN = 2;
+
     private int scoreA;
     private int scoreB;
     private int setsWonA;
@@ -78,8 +84,60 @@ public class MatchData {
     public void setReceivingTeam(String receivingTeam) { this.receivingTeam = receivingTeam; }
 
     // Helper methods
-    public void addPointA() { scoreA++; }
-    public void addPointB() { scoreB++; }
+    public void addPointA() {
+        if (isMatchComplete()) {
+            return;
+        }
+        scoreA++;
+        applySetRules();
+    }
+
+    public void addPointB() {
+        if (isMatchComplete()) {
+            return;
+        }
+        scoreB++;
+        applySetRules();
+    }
+
     public void removePointA() { if (scoreA > 0) scoreA--; }
     public void removePointB() { if (scoreB > 0) scoreB--; }
+
+    public int getPointsToWinCurrentSet() {
+        return isFinalSet() ? POINTS_TO_WIN_TIEBREAK_SET : POINTS_TO_WIN_REGULAR_SET;
+    }
+
+    public boolean isMatchComplete() {
+        return setsWonA >= SETS_TO_WIN_MATCH || setsWonB >= SETS_TO_WIN_MATCH;
+    }
+
+    private boolean isFinalSet() {
+        return currentSet >= FINAL_SET_NUMBER;
+    }
+
+    private void applySetRules() {
+        int targetScore = getPointsToWinCurrentSet();
+        int scoreDiff = Math.abs(scoreA - scoreB);
+
+        if (scoreA < targetScore && scoreB < targetScore) {
+            return;
+        }
+
+        if (scoreDiff < MIN_WIN_MARGIN) {
+            return;
+        }
+
+        if (scoreA > scoreB) {
+            setsWonA++;
+        } else {
+            setsWonB++;
+        }
+
+        scoreA = 0;
+        scoreB = 0;
+
+        if (!isMatchComplete()) {
+            currentSet = Math.min(currentSet + 1, FINAL_SET_NUMBER);
+        }
+    }
 }
