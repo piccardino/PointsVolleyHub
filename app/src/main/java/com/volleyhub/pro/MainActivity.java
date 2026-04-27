@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.WindowManager;
+import android.app.AlertDialog;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView scoreBView;
     private TextView timerView;
     private TextView setsView;
+    private TextView digitalClockView;
     private Button btnAddPointA;
     private Button btnRemovePointA;
     private Button btnAddPointB;
@@ -44,9 +46,11 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler timerHandler;
     private Runnable timerRunnable;
+    private Runnable clockRunnable;
     private boolean isTimerRunning = false;
     private long elapsedTime = 0;
     private long lastUpdateTime;
+    private String lastShownWinner = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         scoreBView = findViewById(R.id.scoreBView);
         timerView = findViewById(R.id.timerView);
         setsView = findViewById(R.id.setsView);
+        digitalClockView = findViewById(R.id.digitalClockView);
         btnAddPointA = findViewById(R.id.btnAddPointA);
         btnRemovePointA = findViewById(R.id.btnRemovePointA);
         btnAddPointB = findViewById(R.id.btnAddPointB);
@@ -101,9 +106,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
+        clockRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateDigitalClock();
+                timerHandler.postDelayed(this, UPDATE_INTERVAL);
+            }
+        };
 
         initializeMatchDataIfNeeded();
         setupFirebaseListener();
+        updateDigitalClock();
+        timerHandler.post(clockRunnable);
     }
 
     private void initializeMatchDataIfNeeded() {
@@ -187,6 +201,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         updateTimerDisplay();
+        maybeShowWinnerAlert(match);
+    }
+
+    private void maybeShowWinnerAlert(MatchData match) {
+        if (!match.isMatchComplete()) {
+            lastShownWinner = null;
+            return;
+        }
+
+        String winnerName = match.getSetsWonA() >= 3 ? match.getTeamAName() : match.getTeamBName();
+        if (winnerName.equals(lastShownWinner)) {
+            return;
+        }
+
+        lastShownWinner = winnerName;
+        new AlertDialog.Builder(this)
+            .setTitle("Partita finita")
+            .setMessage("Il team " + winnerName + " ha vinto!")
+            .setPositiveButton("OK", null)
+            .show();
     }
 
     private void updateButtonBackgrounds(int teamAColor, int teamBColor) {
@@ -271,6 +305,15 @@ public class MainActivity extends AppCompatActivity {
         timerView.setText(timeString);
     }
 
+    private void updateDigitalClock() {
+        String clockText = String.format(Locale.getDefault(), "%tH:%tM:%tS",
+            System.currentTimeMillis(),
+            System.currentTimeMillis(),
+            System.currentTimeMillis()
+        );
+        digitalClockView.setText(clockText);
+    }
+
     private void updateTimerButton() {
         if (isTimerRunning) {
             btnToggleTimer.setText("STOP");
@@ -303,6 +346,7 @@ public class MainActivity extends AppCompatActivity {
     private void logout() {
         if (timerHandler != null) {
             timerHandler.removeCallbacks(timerRunnable);
+            timerHandler.removeCallbacks(clockRunnable);
         }
         mMatchRef.removeEventListener(mMatchListener);
         mAuth.signOut();
@@ -314,6 +358,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if (timerHandler != null) {
             timerHandler.removeCallbacks(timerRunnable);
+            timerHandler.removeCallbacks(clockRunnable);
         }
         if (mMatchListener != null) {
             mMatchRef.removeEventListener(mMatchListener);
