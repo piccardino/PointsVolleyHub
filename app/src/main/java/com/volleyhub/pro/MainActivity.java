@@ -2,13 +2,19 @@ package com.volleyhub.pro;
 
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
 import android.app.AlertDialog;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +27,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -29,13 +39,20 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private DatabaseReference mMatchRef;
+    private DatabaseReference mPlayersRef;
+    private DatabaseReference mFormationRef;
     private ValueEventListener mMatchListener;
+    private ValueEventListener mPlayersListener;
+    private ValueEventListener mFormationListener;
 
     private TextView scoreAView;
     private TextView scoreBView;
     private TextView timerView;
     private TextView setsView;
     private TextView digitalClockView;
+    private LinearLayout recentPointsRow;
+    private LinearLayout playersPage;
+    private LinearLayout playersListContainer;
     private Button btnAddPointA;
     private Button btnRemovePointA;
     private Button btnAddPointB;
@@ -43,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnToggleTimer;
     private Button btnResetMatch;
     private Button btnExit;
+    private GestureDetector pageSwipeDetector;
 
     private Handler timerHandler;
     private Runnable timerRunnable;
@@ -51,6 +69,13 @@ public class MainActivity extends AppCompatActivity {
     private long elapsedTime = 0;
     private long lastUpdateTime;
     private String lastShownWinner = null;
+    private MatchData currentMatch;
+    private List<PlayerData> rosterPlayers = new ArrayList<>();
+    private List<PlayerData> fallbackTeamAPlayers = new ArrayList<>();
+    private List<PlayerData> fallbackTeamBPlayers = new ArrayList<>();
+    private List<FormationToken> formationTokens = new ArrayList<>();
+    private String fallbackTeamAName = "Team A";
+    private String fallbackTeamBName = "Team B";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,14 +92,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String userId = mAuth.getCurrentUser().getUid();
-        mMatchRef = FirebaseDatabase.getInstance().getReference()
-            .child("users").child(userId).child("matchData").child("liveMatchProgress_index");
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
+            .child("users").child(userId);
+        mMatchRef = userRef.child("matchData").child("liveMatchProgress_index");
+        mPlayersRef = userRef.child("players");
+        mFormationRef = userRef.child("matchData").child("formation");
 
         scoreAView = findViewById(R.id.scoreAView);
         scoreBView = findViewById(R.id.scoreBView);
         timerView = findViewById(R.id.timerView);
         setsView = findViewById(R.id.setsView);
         digitalClockView = findViewById(R.id.digitalClockView);
+        recentPointsRow = findViewById(R.id.recentPointsRow);
+        playersPage = findViewById(R.id.playersPage);
+        playersListContainer = findViewById(R.id.playersListContainer);
         btnAddPointA = findViewById(R.id.btnAddPointA);
         btnRemovePointA = findViewById(R.id.btnRemovePointA);
         btnAddPointB = findViewById(R.id.btnAddPointB);
@@ -90,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
+        setupPageSwipeGestures();
 
         ColorStateList darkGray = ColorStateList.valueOf(Color.parseColor("#1c1c1c"));
         btnToggleTimer.setBackgroundTintList(darkGray);
@@ -116,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
 
         initializeMatchDataIfNeeded();
         setupFirebaseListener();
+        setupPlayersListener();
+        setupFormationListener();
         updateDigitalClock();
         timerHandler.post(clockRunnable);
     }
@@ -156,7 +190,62 @@ public class MainActivity extends AppCompatActivity {
         mMatchRef.addValueEventListener(mMatchListener);
     }
 
+    private void setupPlayersListener() {
+        mPlayersListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                List<PlayerData> loadedPlayers = new ArrayList<>();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    PlayerData player = child.getValue(PlayerData.class);
+                    if (player != null) {
+                        loadedPlayers.add(player);
+                    }
+                }
+                rosterPlayers = loadedPlayers;
+                rebuildFallbackPlayers();
+                refreshPlayersPage();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.w(TAG, "Failed to read roster players", error.toException());
+            }
+        };
+        mPlayersRef.addValueEventListener(mPlayersListener);
+    }
+
+    private void setupFormationListener() {
+        mFormationListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                fallbackTeamAName = getSnapshotString(snapshot.child("benchA"), "Team A");
+                fallbackTeamBName = getSnapshotString(snapshot.child("benchB"), "Team B");
+
+                List<FormationToken> loadedTokens = new ArrayList<>();
+                for (DataSnapshot tokenSnapshot : snapshot.child("tokens").getChildren()) {
+                    String name = getSnapshotString(tokenSnapshot.child("name"), "");
+                    String team = getSnapshotString(tokenSnapshot.child("team"), "");
+                    String role = getSnapshotString(tokenSnapshot.child("role"), "");
+                    if (!name.isEmpty() && !team.isEmpty()) {
+                        loadedTokens.add(new FormationToken(name, team, role));
+                    }
+                }
+
+                formationTokens = loadedTokens;
+                rebuildFallbackPlayers();
+                refreshPlayersPage();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.w(TAG, "Failed to read formation data", error.toException());
+            }
+        };
+        mFormationRef.addValueEventListener(mFormationListener);
+    }
+
     private void updateUI(MatchData match) {
+        currentMatch = match;
         scoreAView.setText(String.valueOf(match.getScoreA()));
         scoreBView.setText(String.valueOf(match.getScoreB()));
 
@@ -178,6 +267,8 @@ public class MainActivity extends AppCompatActivity {
             scoreAView.setTextColor(teamAColor);
             scoreBView.setTextColor(teamBColor);
             updateButtonBackgrounds(teamAColor, teamBColor);
+            updateRecentPoints(match, teamAColor, teamBColor);
+            updatePlayersPage(match, teamAColor, teamBColor);
         } catch (IllegalArgumentException e) {
             Log.w(TAG, "Invalid color format, using defaults", e);
             int defaultTeamAColor = Color.parseColor("#00fbff");
@@ -185,6 +276,8 @@ public class MainActivity extends AppCompatActivity {
             scoreAView.setTextColor(defaultTeamAColor);
             scoreBView.setTextColor(defaultTeamBColor);
             updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor);
+            updateRecentPoints(match, defaultTeamAColor, defaultTeamBColor);
+            updatePlayersPage(match, defaultTeamAColor, defaultTeamBColor);
         }
 
         elapsedTime = match.getTimerAccumulatedSeconds() * 1000;
@@ -202,6 +295,220 @@ public class MainActivity extends AppCompatActivity {
 
         updateTimerDisplay();
         maybeShowWinnerAlert(match);
+    }
+
+
+    private void setupPageSwipeGestures() {
+        pageSwipeDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_DISTANCE_THRESHOLD = 70;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 70;
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) {
+                    return false;
+                }
+
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = e2.getY() - e1.getY();
+                boolean isHorizontalSwipe = Math.abs(deltaX) > SWIPE_DISTANCE_THRESHOLD
+                    && Math.abs(deltaX) > Math.abs(deltaY)
+                    && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD;
+
+                if (!isHorizontalSwipe) {
+                    return false;
+                }
+
+                if (deltaX < 0 && playersPage.getVisibility() != View.VISIBLE) {
+                    showPlayersPage(true);
+                    return true;
+                }
+
+                if (deltaX < 0 && playersPage.getVisibility() == View.VISIBLE) {
+                    showPlayersPage(false);
+                    return true;
+                }
+
+                return false;
+            }
+        });
+    }
+
+    private void showPlayersPage(boolean show) {
+        playersPage.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (pageSwipeDetector != null) {
+            pageSwipeDetector.onTouchEvent(ev);
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private void updateRecentPoints(MatchData match, int teamAColor, int teamBColor) {
+        recentPointsRow.removeAllViews();
+        List<PointHistoryItem> history = match.getHistory();
+
+        for (int i = 0; i < 5; i++) {
+            TextView dot = new TextView(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpToPx(10), dpToPx(10));
+            params.setMargins(dpToPx(2), 0, dpToPx(2), 0);
+            dot.setLayoutParams(params);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setShape(GradientDrawable.RECTANGLE);
+            background.setCornerRadius(dpToPx(2));
+            if (i < history.size()) {
+                String team = history.get(i).getTeam();
+                background.setColor("A".equals(team) ? teamAColor : teamBColor);
+            } else {
+                background.setColor(Color.parseColor("#333333"));
+            }
+            dot.setBackground(background);
+            recentPointsRow.addView(dot);
+        }
+    }
+
+    private void updatePlayersPage(MatchData match, int teamAColor, int teamBColor) {
+        playersListContainer.removeAllViews();
+        List<PlayerData> teamAPlayers = !match.getTeamAPlayers().isEmpty()
+            ? match.getTeamAPlayers()
+            : fallbackTeamAPlayers;
+        List<PlayerData> teamBPlayers = !match.getTeamBPlayers().isEmpty()
+            ? match.getTeamBPlayers()
+            : fallbackTeamBPlayers;
+
+        String teamAName = !match.getTeamAPlayers().isEmpty()
+            ? match.getTeamAName()
+            : fallbackTeamAName;
+        String teamBName = !match.getTeamBPlayers().isEmpty()
+            ? match.getTeamBName()
+            : fallbackTeamBName;
+
+        addTeamPlayersSection(teamAName, teamAPlayers, teamAColor);
+        addTeamPlayersSection(teamBName, teamBPlayers, teamBColor);
+    }
+
+    private void rebuildFallbackPlayers() {
+        if (!formationTokens.isEmpty()) {
+            Map<String, PlayerData> rosterByName = new HashMap<>();
+            for (PlayerData player : rosterPlayers) {
+                rosterByName.put(normalizeName(player.getName()), player);
+            }
+
+            List<PlayerData> teamAPlayers = new ArrayList<>();
+            List<PlayerData> teamBPlayers = new ArrayList<>();
+            for (FormationToken token : formationTokens) {
+                PlayerData player = buildPlayerFromSources(rosterByName.get(normalizeName(token.name)), token);
+                if ("team-a".equals(token.team)) {
+                    teamAPlayers.add(player);
+                } else if ("team-b".equals(token.team)) {
+                    teamBPlayers.add(player);
+                }
+            }
+
+            fallbackTeamAPlayers = teamAPlayers;
+            fallbackTeamBPlayers = teamBPlayers;
+            return;
+        }
+
+        List<PlayerData> roster = new ArrayList<>(rosterPlayers);
+        int mid = (int) Math.ceil(roster.size() / 2.0);
+        fallbackTeamAPlayers = new ArrayList<>(roster.subList(0, Math.min(mid, roster.size())));
+        fallbackTeamBPlayers = new ArrayList<>(roster.subList(Math.min(mid, roster.size()), roster.size()));
+    }
+
+    private PlayerData buildPlayerFromSources(PlayerData rosterPlayer, FormationToken token) {
+        PlayerData player = new PlayerData();
+        if (rosterPlayer != null) {
+            player.setName(rosterPlayer.getName());
+            player.setNum(rosterPlayer.getNum());
+            player.setRole(rosterPlayer.getRole());
+        }
+
+        if (player.getName().equals("Giocatore")) {
+            player.setName(token.name);
+        }
+        if (player.getRole().isEmpty() && !token.role.isEmpty()) {
+            player.setRole(token.role);
+        }
+        return player;
+    }
+
+    private void refreshPlayersPage() {
+        if (currentMatch == null) {
+            return;
+        }
+        updatePlayersPage(
+            currentMatch,
+            parseTeamColor(currentMatch.getTeamAColor(), "#00fbff"),
+            parseTeamColor(currentMatch.getTeamBColor(), "#ff0055")
+        );
+    }
+
+    private int parseTeamColor(String colorValue, String fallbackColor) {
+        try {
+            return Color.parseColor(colorValue);
+        } catch (IllegalArgumentException e) {
+            return Color.parseColor(fallbackColor);
+        }
+    }
+
+    private String getSnapshotString(DataSnapshot snapshot, String fallback) {
+        Object value = snapshot.getValue();
+        if (value == null) {
+            return fallback;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? fallback : text;
+    }
+
+    private String normalizeName(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private void addTeamPlayersSection(String teamName, List<PlayerData> players, int teamColor) {
+        TextView title = new TextView(this);
+        title.setText(teamName);
+        title.setTextColor(teamColor);
+        title.setTextSize(12);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setPadding(0, dpToPx(8), 0, dpToPx(3));
+        playersListContainer.addView(title);
+
+        if (players.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("Nessun giocatore salvato");
+            empty.setTextColor(Color.parseColor("#8a8a8a"));
+            empty.setTextSize(9);
+            empty.setPadding(dpToPx(4), dpToPx(2), 0, dpToPx(6));
+            playersListContainer.addView(empty);
+            return;
+        }
+
+        for (PlayerData player : players) {
+            TextView row = new TextView(this);
+            String number = player.getDisplayNumber();
+            String numberText = number.isEmpty() ? "" : "#" + number + "  ";
+            String role = player.getRole();
+            String roleText = role.isEmpty() ? "" : " · " + role;
+            row.setText(numberText + player.getName() + roleText);
+            row.setTextColor(Color.WHITE);
+            row.setTextSize(10);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dpToPx(6), dpToPx(3), dpToPx(6), dpToPx(3));
+            playersListContainer.addView(row);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void maybeShowWinnerAlert(MatchData match) {
@@ -335,6 +642,7 @@ public class MainActivity extends AppCompatActivity {
                     match.setSetsWonB(0);
                     match.setCurrentSet(1);
                     match.setTimerAccumulatedSeconds(0);
+                    match.setHistory(new java.util.ArrayList<>());
                     match.setTimerIsPaused(true);
                     match.setTimerLastStartedAt(System.currentTimeMillis());
                     mMatchRef.setValue(match);
@@ -348,7 +656,15 @@ public class MainActivity extends AppCompatActivity {
             timerHandler.removeCallbacks(timerRunnable);
             timerHandler.removeCallbacks(clockRunnable);
         }
-        mMatchRef.removeEventListener(mMatchListener);
+        if (mMatchListener != null) {
+            mMatchRef.removeEventListener(mMatchListener);
+        }
+        if (mPlayersListener != null) {
+            mPlayersRef.removeEventListener(mPlayersListener);
+        }
+        if (mFormationListener != null) {
+            mFormationRef.removeEventListener(mFormationListener);
+        }
         mAuth.signOut();
         finish();
     }
@@ -362,6 +678,24 @@ public class MainActivity extends AppCompatActivity {
         }
         if (mMatchListener != null) {
             mMatchRef.removeEventListener(mMatchListener);
+        }
+        if (mPlayersListener != null) {
+            mPlayersRef.removeEventListener(mPlayersListener);
+        }
+        if (mFormationListener != null) {
+            mFormationRef.removeEventListener(mFormationListener);
+        }
+    }
+
+    private static class FormationToken {
+        private final String name;
+        private final String team;
+        private final String role;
+
+        private FormationToken(String name, String team, String role) {
+            this.name = name;
+            this.team = team;
+            this.role = role;
         }
     }
 }

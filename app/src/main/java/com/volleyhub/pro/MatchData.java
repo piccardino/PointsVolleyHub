@@ -2,6 +2,12 @@ package com.volleyhub.pro;
 
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 @IgnoreExtraProperties
 public class MatchData {
     private static final int POINTS_TO_WIN_REGULAR_SET = 25;
@@ -24,6 +30,9 @@ public class MatchData {
     private String teamBColor;
     private String servingTeam;
     private String receivingTeam;
+    private List<PlayerData> teamAPlayers;
+    private List<PlayerData> teamBPlayers;
+    private List<PointHistoryItem> history;
 
     public MatchData() {
         // Default constructor required for Firebase
@@ -41,6 +50,9 @@ public class MatchData {
         this.teamBColor = "#ff0055";
         this.servingTeam = "A";
         this.receivingTeam = "B";
+        this.teamAPlayers = new ArrayList<>();
+        this.teamBPlayers = new ArrayList<>();
+        this.history = new ArrayList<>();
     }
 
     public MatchData(String teamAName, String teamBName, String teamAColor, String teamBColor) {
@@ -66,6 +78,9 @@ public class MatchData {
     public String getTeamBColor() { return teamBColor != null ? teamBColor : "#ff0055"; }
     public String getServingTeam() { return servingTeam; }
     public String getReceivingTeam() { return receivingTeam; }
+    public List<PlayerData> getTeamAPlayers() { return teamAPlayers != null ? teamAPlayers : new ArrayList<>(); }
+    public List<PlayerData> getTeamBPlayers() { return teamBPlayers != null ? teamBPlayers : new ArrayList<>(); }
+    public List<PointHistoryItem> getHistory() { return history != null ? history : new ArrayList<>(); }
 
     // Setters
     public void setScoreA(int scoreA) { this.scoreA = scoreA; }
@@ -82,6 +97,9 @@ public class MatchData {
     public void setTeamBColor(String teamBColor) { this.teamBColor = teamBColor; }
     public void setServingTeam(String servingTeam) { this.servingTeam = servingTeam; }
     public void setReceivingTeam(String receivingTeam) { this.receivingTeam = receivingTeam; }
+    public void setTeamAPlayers(List<PlayerData> teamAPlayers) { this.teamAPlayers = teamAPlayers; }
+    public void setTeamBPlayers(List<PlayerData> teamBPlayers) { this.teamBPlayers = teamBPlayers; }
+    public void setHistory(List<PointHistoryItem> history) { this.history = history; }
 
     // Helper methods
     public void addPointA() {
@@ -89,6 +107,7 @@ public class MatchData {
             return;
         }
         scoreA++;
+        addHistoryPoint("A", getCurrentHistoryTime());
         applySetRules();
     }
 
@@ -97,11 +116,45 @@ public class MatchData {
             return;
         }
         scoreB++;
+        addHistoryPoint("B", getCurrentHistoryTime());
         applySetRules();
     }
 
-    public void removePointA() { if (scoreA > 0) scoreA--; }
-    public void removePointB() { if (scoreB > 0) scoreB--; }
+    public void removePointA() {
+        if (scoreA > 0) {
+            scoreA--;
+            removeLastHistoryPointForTeam("A");
+        }
+    }
+
+    public void removePointB() {
+        if (scoreB > 0) {
+            scoreB--;
+            removeLastHistoryPointForTeam("B");
+        }
+    }
+
+    public void addHistoryPoint(String team, String time) {
+        List<PointHistoryItem> updatedHistory = new ArrayList<>(getHistory());
+        String teamName = "A".equals(team) ? getTeamAName() : getTeamBName();
+        updatedHistory.add(0, new PointHistoryItem(time, team, teamName, scoreA, scoreB));
+        if (updatedHistory.size() > 20) {
+            updatedHistory = new ArrayList<>(updatedHistory.subList(0, 20));
+        }
+        history = updatedHistory;
+    }
+
+    private String getCurrentHistoryTime() {
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+    }
+
+    private void removeLastHistoryPointForTeam(String team) {
+        List<PointHistoryItem> updatedHistory = new ArrayList<>(getHistory());
+        if (!updatedHistory.isEmpty() && team.equals(updatedHistory.get(0).getTeam())) {
+            updatedHistory.remove(0);
+            history = updatedHistory;
+        }
+    }
 
     public int getPointsToWinCurrentSet() {
         return isFinalSet() ? POINTS_TO_WIN_TIEBREAK_SET : POINTS_TO_WIN_REGULAR_SET;

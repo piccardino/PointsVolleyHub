@@ -24,6 +24,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <LinearLayout
+        android:id="@+id/recentPointsRow"
+        android:layout_width="wrap_content"
+        android:layout_height="12dp"
+        android:layout_marginTop="1dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timerView" />
+
     <!-- Sets Display -->
     <TextView
         android:id="@+id/setsView"
@@ -33,7 +44,7 @@
         android:textColor="@color/text_secondary"
         android:textSize="10sp"
         android:layout_marginTop="2dp"
-        app:layout_constraintTop_toBottomOf="@id/timerView"
+        app:layout_constraintTop_toBottomOf="@id/recentPointsRow"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -43,20 +54,23 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:gravity="center"
+        android:gravity="top|center_horizontal"
         android:layout_marginTop="0dp"
         android:layout_marginEnd="2dp"
+        android:paddingTop="4dp"
         app:layout_constraintTop_toBottomOf="@id/setsView"
         app:layout_constraintBottom_toTopOf="@id/buttonRow"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/teamBSection"
         app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintVertical_bias="0.0"
         app:layout_constraintVertical_weight="1">
 
         <TextView
             android:id="@+id/scoreAView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:includeFontPadding="false"
             android:text="0"
             android:textColor="@color/team_a_color"
             android:textSize="32sp"
@@ -70,20 +84,23 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:gravity="center"
+        android:gravity="top|center_horizontal"
         android:layout_marginTop="0dp"
         android:layout_marginStart="2dp"
+        android:paddingTop="4dp"
         app:layout_constraintTop_toBottomOf="@id/setsView"
         app:layout_constraintBottom_toTopOf="@id/buttonRow"
         app:layout_constraintStart_toEndOf="@id/teamASection"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintVertical_bias="0.0"
         app:layout_constraintVertical_weight="1">
 
         <TextView
             android:id="@+id/scoreBView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:includeFontPadding="false"
             android:text="0"
             android:textColor="@color/team_b_color"
             android:textSize="32sp"
@@ -98,7 +115,8 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="4dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="0dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         app:layout_constraintBottom_toTopOf="@id/controlButtons"
@@ -176,7 +194,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="26dp"
+        android:layout_marginBottom="28dp"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -240,5 +258,53 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <LinearLayout
+        android:id="@+id/playersPage"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/background"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Giocatori"
+            android:textColor="@color/primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:text="Swipe → per tornare"
+            android:textColor="@color/text_secondary"
+            android:textSize="8sp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="4dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/playersListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
