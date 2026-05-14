@@ -7,6 +7,8 @@ public class PlayerData {
     private String name;
     private Object num;
     private String role;
+    private Boolean active;
+    private Double weight;
 
     public PlayerData() {
         // Default constructor required for Firebase
@@ -28,6 +30,14 @@ public class PlayerData {
         return num == null ? "" : String.valueOf(num);
     }
 
+    public Boolean getActive() {
+        return active != null ? active : true;
+    }
+
+    public Double getWeight() {
+        return weight != null ? weight : 1.0;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -38,5 +48,13 @@ public class PlayerData {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 }

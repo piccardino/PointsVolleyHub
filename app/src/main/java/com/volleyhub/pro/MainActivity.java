@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnToggleTimer;
     private Button btnResetMatch;
     private Button btnExit;
+    private Button btnGenerateTeams;
     private GestureDetector pageSwipeDetector;
 
     private Handler timerHandler;
@@ -104,6 +105,13 @@ public class MainActivity extends AppCompatActivity {
         setsView = findViewById(R.id.setsView);
         digitalClockView = findViewById(R.id.digitalClockView);
         recentPointsRow = findViewById(R.id.recentPointsRow);
+
+        scoreAView = findViewById(R.id.scoreAView);
+        scoreBView = findViewById(R.id.scoreBView);
+        timerView = findViewById(R.id.timerView);
+        setsView = findViewById(R.id.setsView);
+        digitalClockView = findViewById(R.id.digitalClockView);
+        recentPointsRow = findViewById(R.id.recentPointsRow);
         playersPage = findViewById(R.id.playersPage);
         playersListContainer = findViewById(R.id.playersListContainer);
         btnAddPointA = findViewById(R.id.btnAddPointA);
@@ -113,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         btnToggleTimer = findViewById(R.id.btnToggleTimer);
         btnResetMatch = findViewById(R.id.btnResetMatch);
         btnExit = findViewById(R.id.btnExit);
+        btnGenerateTeams = findViewById(R.id.btnGenerateTeams);
 
         btnAddPointA.setOnClickListener(v -> updateScore(true, true));
         btnRemovePointA.setOnClickListener(v -> updateScore(false, true));
@@ -121,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
+        if (btnGenerateTeams != null) {
+            btnGenerateTeams.setOnClickListener(v -> generateTeams());
+        }
         setupPageSwipeGestures();
 
         ColorStateList darkGray = ColorStateList.valueOf(Color.parseColor("#1c1c1c"));
@@ -649,6 +661,100 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void generateTeams() {
+        if (rosterPlayers == null || rosterPlayers.size() < 2) {
+            Toast.makeText(this, "Attiva almeno 2 persone", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<PlayerData> pool = new ArrayList<>();
+        for (PlayerData p : rosterPlayers) {
+            if (p.getActive()) {
+                pool.add(p);
+            }
+        }
+
+        if (pool.size() < 2) {
+            Toast.makeText(this, "Attiva almeno 2 persone", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int halfSize = (int) Math.ceil(pool.size() / 2.0);
+        int targetBSize = pool.size() / 2;
+
+        double bestDiff = Double.MAX_VALUE;
+        List<PlayerData> bestA = new ArrayList<>();
+        List<PlayerData> bestB = new ArrayList<>();
+
+        java.util.Random random = new java.util.Random();
+
+        for (int i = 0; i < 100; i++) {
+            List<PlayerData> tempA = new ArrayList<>();
+            List<PlayerData> tempB = new ArrayList<>();
+            double twA = 0;
+            double twB = 0;
+
+            List<PlayerData> shuffled = new ArrayList<>(pool);
+            java.util.Collections.shuffle(shuffled, random);
+
+            for (PlayerData p : shuffled) {
+                double w = p.getWeight();
+                if (tempA.size() >= halfSize) {
+                    tempB.add(p);
+                    twB += w;
+                } else if (tempB.size() >= targetBSize) {
+                    tempA.add(p);
+                    twA += w;
+                } else if (twA <= twB) {
+                    tempA.add(p);
+                    twA += w;
+                } else {
+                    tempB.add(p);
+                    twB += w;
+                }
+            }
+
+            double avgA = tempA.isEmpty() ? 0 : twA / tempA.size();
+            double avgB = tempB.isEmpty() ? 0 : twB / tempB.size();
+            double diff = Math.abs(avgA - avgB);
+
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestA = new ArrayList<>(tempA);
+                bestB = new ArrayList<>(tempB);
+            }
+            if (diff == 0) break;
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("scoreA", 0);
+        data.put("scoreB", 0);
+        data.put("benchA", "Team A");
+        data.put("benchB", "Team B");
+
+        List<Map<String, String>> tokens = new ArrayList<>();
+        for (PlayerData p : bestA) {
+            Map<String, String> token = new HashMap<>();
+            token.put("name", p.getName());
+            token.put("team", "team-a");
+            token.put("role", "Libero".equals(p.getRole()) ? "Libero" : "Universal");
+            token.put("gender", "male");
+            tokens.add(token);
+        }
+        for (PlayerData p : bestB) {
+            Map<String, String> token = new HashMap<>();
+            token.put("name", p.getName());
+            token.put("team", "team-b");
+            token.put("role", "Libero".equals(p.getRole()) ? "Libero" : "Universal");
+            token.put("gender", "male");
+            tokens.add(token);
+        }
+
+        data.put("tokens", tokens);
+        mFormationRef.setValue(data);
+        Toast.makeText(this, "Squadre bilanciate generate!", Toast.LENGTH_SHORT).show();
     }
 
     private void logout() {
