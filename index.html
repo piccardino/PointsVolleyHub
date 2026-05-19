@@ -4155,10 +4155,35 @@
 
             document.querySelectorAll('.player-token').forEach(el => el.remove());
             if (data.tokens) {
+                let teamACount = 0;
+                let teamBCount = 0;
                 data.tokens.forEach(tData => {
                     const p = players.find(x => x.name === tData.name);
                     if (p && p.active !== false) {
-                        spawn(p, tData.team, tData.top, tData.left, tData.parent === 'courtFloor' ? 'court' : tData.parent);
+                        let target = tData.parent === 'courtFloor' ? 'court' : tData.parent;
+                        let top = tData.top;
+                        let left = tData.left;
+
+                        // Watch-generated formations only save team membership, so derive placement here.
+                        if (!target || !top || !left) {
+                            const isTeamA = tData.team === 'team-a';
+                            const posIndex = isTeamA ? teamACount : teamBCount;
+
+                            if (posIndex < 6) {
+                                const pos = isTeamA ? posA[posIndex] : posB[posIndex];
+                                target = 'court';
+                                top = pos.t;
+                                left = pos.l;
+                            } else {
+                                target = isTeamA ? 'benchA' : 'benchB';
+                                top = '50%';
+                                left = (20 + (posIndex - 6) * 20) + '%';
+                            }
+                        }
+
+                        spawn(p, tData.team, top, left, target);
+                        if (tData.team === 'team-a') teamACount++;
+                        else if (tData.team === 'team-b') teamBCount++;
                     }
                 });
             }
