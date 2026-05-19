@@ -7,7 +7,7 @@ set "APK_PATH=%SCRIPT_DIR%app\build\outputs\apk\debug\app-debug.apk"
 set "GRADLEW=%SCRIPT_DIR%gradlew.bat"
 set "ADB="
 set "DEVICE_FLAG="
-set "DEFAULT_DEVICE=10.211.83.249:42303"
+set "DEFAULT_DEVICE=10.211.83.249:33507"
 
 if not "%~1"=="" (
     set "DEVICE_FLAG=-s %~1"

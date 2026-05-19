@@ -389,19 +389,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void updatePlayersPage(MatchData match, int teamAColor, int teamBColor) {
         playersListContainer.removeAllViews();
-        List<PlayerData> teamAPlayers = !match.getTeamAPlayers().isEmpty()
-            ? match.getTeamAPlayers()
-            : fallbackTeamAPlayers;
-        List<PlayerData> teamBPlayers = !match.getTeamBPlayers().isEmpty()
-            ? match.getTeamBPlayers()
-            : fallbackTeamBPlayers;
+        boolean useFormationFallback = !formationTokens.isEmpty();
+        List<PlayerData> teamAPlayers = useFormationFallback
+            ? fallbackTeamAPlayers
+            : (!match.getTeamAPlayers().isEmpty() ? match.getTeamAPlayers() : fallbackTeamAPlayers);
+        List<PlayerData> teamBPlayers = useFormationFallback
+            ? fallbackTeamBPlayers
+            : (!match.getTeamBPlayers().isEmpty() ? match.getTeamBPlayers() : fallbackTeamBPlayers);
 
-        String teamAName = !match.getTeamAPlayers().isEmpty()
-            ? match.getTeamAName()
-            : fallbackTeamAName;
-        String teamBName = !match.getTeamBPlayers().isEmpty()
-            ? match.getTeamBName()
-            : fallbackTeamBName;
+        String teamAName = useFormationFallback
+            ? fallbackTeamAName
+            : (!match.getTeamAPlayers().isEmpty() ? match.getTeamAName() : fallbackTeamAName);
+        String teamBName = useFormationFallback
+            ? fallbackTeamBName
+            : (!match.getTeamBPlayers().isEmpty() ? match.getTeamBName() : fallbackTeamBName);
 
         addTeamPlayersSection(teamAName, teamAPlayers, teamAColor);
         addTeamPlayersSection(teamBName, teamBPlayers, teamBColor);
