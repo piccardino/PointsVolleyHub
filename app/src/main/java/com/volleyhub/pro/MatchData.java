@@ -189,7 +189,9 @@ public class MatchData {
         scoreA = 0;
         scoreB = 0;
 
-        if (!isMatchComplete()) {
+        if (isMatchComplete()) {
+            history = new ArrayList<>();
+        } else {
             currentSet = Math.min(currentSet + 1, FINAL_SET_NUMBER);
         }
     }

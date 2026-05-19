@@ -10,7 +10,6 @@
     android:focusable="true"
     android:descendantFocusability="blocksDescendants">
 
-    <!-- Timer Display -->
     <TextView
         android:id="@+id/timerView"
         android:layout_width="wrap_content"
@@ -35,7 +34,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/timerView" />
 
-    <!-- Sets Display -->
     <TextView
         android:id="@+id/setsView"
         android:layout_width="wrap_content"
@@ -48,7 +46,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Team A Section -->
     <LinearLayout
         android:id="@+id/teamASection"
         android:layout_width="0dp"
@@ -78,7 +75,6 @@
 
     </LinearLayout>
 
-    <!-- Team B Section -->
     <LinearLayout
         android:id="@+id/teamBSection"
         android:layout_width="0dp"
@@ -108,7 +104,6 @@
 
     </LinearLayout>
 
-    <!-- Button Row -->
     <LinearLayout
         android:id="@+id/buttonRow"
         android:layout_width="match_parent"
@@ -123,7 +118,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Team A Controls -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -154,7 +148,6 @@
 
         </LinearLayout>
 
-        <!-- Team B Controls -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -187,7 +180,6 @@
 
     </LinearLayout>
 
-    <!-- Control Buttons -->
     <LinearLayout
         android:id="@+id/controlButtons"
         android:layout_width="match_parent"
@@ -259,7 +251,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
     <LinearLayout
         android:id="@+id/playersPage"
         android:layout_width="0dp"
@@ -285,11 +276,12 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/playersSwipeHint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:gravity="center"
-            android:text="Swipe → per tornare"
+            android:text="Swipe &lt;- per tornare"
             android:textColor="@color/text_secondary"
             android:textSize="8sp" />
 
