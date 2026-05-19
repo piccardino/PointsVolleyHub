@@ -4022,6 +4022,7 @@
         let currentUserUid = null;
         let courtViewRotation = 0;
         let coachTeam = 'A';
+        let formationRef = null;
 
         // Firebase Auth State Listener
         auth.onAuthStateChanged((user) => {
@@ -4063,13 +4064,14 @@
                 loadPlayers(() => {
                     renderList();
                     resizeWorld();
-                    loadFormation();
+                    startFormationSync();
                     document.getElementById('uiPanel').style.display = 'flex';
                     initPlayerListDragScroll();
                     t.classList.remove('show');
                 });
             } else {
                 // No user is signed in.
+                stopFormationSync();
                 currentUserUid = null;
                 loadLocalCourtViewSettings();
                 // hideLogin(); // Don't explicitly hide, let the initial state be visible or handled by toggle
@@ -4136,39 +4138,53 @@
             db.ref('users/' + currentUserUid + '/matchData/formation').set(data);
         }
 
-        function loadFormation() {
+        function applyFormationData(data) {
+            if (!data) return;
+            scoreA = data.scoreA || 0;
+            scoreB = data.scoreB || 0;
+            document.getElementById('valScoreA').innerText = scoreA;
+            document.getElementById('valScoreB').innerText = scoreB;
+            if (data.benchA) {
+                document.getElementById('benchLabelA').innerText = data.benchA;
+                document.getElementById('labelScoreA').innerText = data.benchA;
+            }
+            if (data.benchB) {
+                document.getElementById('benchLabelB').innerText = data.benchB;
+                document.getElementById('labelScoreB').innerText = data.benchB;
+            }
+
+            document.querySelectorAll('.player-token').forEach(el => el.remove());
+            if (data.tokens) {
+                data.tokens.forEach(tData => {
+                    const p = players.find(x => x.name === tData.name);
+                    if (p && p.active !== false) {
+                        spawn(p, tData.team, tData.top, tData.left, tData.parent === 'courtFloor' ? 'court' : tData.parent);
+                    }
+                });
+            }
+            setTimeout(() => {
+                updateTeamWeights();
+                updateSpriteFacing();
+                updateTacticalHUD();
+                if (document.body.classList.contains('serious-mode')) populateStatsPlayers();
+            }, 100);
+        }
+
+        function stopFormationSync() {
+            if (formationRef) {
+                formationRef.off();
+                formationRef = null;
+            }
+        }
+
+        function startFormationSync() {
             if (!currentUserUid) return;
-            db.ref('users/' + currentUserUid + '/matchData/formation').once('value').then(snap => {
+            stopFormationSync();
+            formationRef = db.ref('users/' + currentUserUid + '/matchData/formation');
+            formationRef.on('value', snap => {
                 const data = snap.val();
                 if (data) {
-                    scoreA = data.scoreA || 0;
-                    scoreB = data.scoreB || 0;
-                    document.getElementById('valScoreA').innerText = scoreA;
-                    document.getElementById('valScoreB').innerText = scoreB;
-                    if (data.benchA) {
-                        document.getElementById('benchLabelA').innerText = data.benchA;
-                        document.getElementById('labelScoreA').innerText = data.benchA;
-                    }
-                    if (data.benchB) {
-                        document.getElementById('benchLabelB').innerText = data.benchB;
-                        document.getElementById('labelScoreB').innerText = data.benchB;
-                    }
-
-                    document.querySelectorAll('.player-token').forEach(el => el.remove());
-                    if (data.tokens) {
-                        data.tokens.forEach(tData => {
-                            const p = players.find(x => x.name === tData.name);
-                            if (p && p.active !== false) {
-                                spawn(p, tData.team, tData.top, tData.left, tData.parent === 'courtFloor' ? 'court' : tData.parent);
-                            }
-                        });
-                    }
-                    setTimeout(() => {
-                        updateTeamWeights();
-                        updateSpriteFacing();
-                        updateTacticalHUD();
-                        if (document.body.classList.contains('serious-mode')) populateStatsPlayers();
-                    }, 100);
+                    applyFormationData(data);
                 }
             });
         }
