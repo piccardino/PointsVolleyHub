@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnRemovePointA;
     private Button btnAddPointB;
     private Button btnRemovePointB;
+    private View btnSwapSides;
     private Button btnToggleTimer;
     private Button btnResetMatch;
     private Button btnExit;
@@ -105,19 +106,13 @@ public class MainActivity extends AppCompatActivity {
         setsView = findViewById(R.id.setsView);
         digitalClockView = findViewById(R.id.digitalClockView);
         recentPointsRow = findViewById(R.id.recentPointsRow);
-
-        scoreAView = findViewById(R.id.scoreAView);
-        scoreBView = findViewById(R.id.scoreBView);
-        timerView = findViewById(R.id.timerView);
-        setsView = findViewById(R.id.setsView);
-        digitalClockView = findViewById(R.id.digitalClockView);
-        recentPointsRow = findViewById(R.id.recentPointsRow);
         playersPage = findViewById(R.id.playersPage);
         playersListContainer = findViewById(R.id.playersListContainer);
         btnAddPointA = findViewById(R.id.btnAddPointA);
         btnRemovePointA = findViewById(R.id.btnRemovePointA);
         btnAddPointB = findViewById(R.id.btnAddPointB);
         btnRemovePointB = findViewById(R.id.btnRemovePointB);
+        btnSwapSides = findViewById(R.id.btnSwapSides);
         btnToggleTimer = findViewById(R.id.btnToggleTimer);
         btnResetMatch = findViewById(R.id.btnResetMatch);
         btnExit = findViewById(R.id.btnExit);
@@ -127,6 +122,9 @@ public class MainActivity extends AppCompatActivity {
         btnRemovePointA.setOnClickListener(v -> updateScore(false, true));
         btnAddPointB.setOnClickListener(v -> updateScore(true, false));
         btnRemovePointB.setOnClickListener(v -> updateScore(false, false));
+        if (btnSwapSides != null) {
+            btnSwapSides.setOnClickListener(v -> toggleSwapSides());
+        }
         btnToggleTimer.setOnClickListener(v -> toggleTimer());
         btnResetMatch.setOnClickListener(v -> resetMatch());
         btnExit.setOnClickListener(v -> logout());
@@ -258,15 +256,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateUI(MatchData match) {
         currentMatch = match;
-        scoreAView.setText(String.valueOf(match.getScoreA()));
-        scoreBView.setText(String.valueOf(match.getScoreB()));
+        boolean isSwapped = match.isSidesSwapped();
+
+        if (isSwapped) {
+            scoreAView.setText(String.valueOf(match.getScoreB()));
+            scoreBView.setText(String.valueOf(match.getScoreA()));
+        } else {
+            scoreAView.setText(String.valueOf(match.getScoreA()));
+            scoreBView.setText(String.valueOf(match.getScoreB()));
+        }
 
         String setInfo = String.format(
             Locale.getDefault(),
             "Set %d: %d - %d",
             match.getCurrentSet(),
-            match.getSetsWonA(),
-            match.getSetsWonB()
+            isSwapped ? match.getSetsWonB() : match.getSetsWonA(),
+            isSwapped ? match.getSetsWonA() : match.getSetsWonB()
         );
         setsView.setText(setInfo);
 
@@ -276,18 +281,18 @@ public class MainActivity extends AppCompatActivity {
         try {
             int teamAColor = Color.parseColor(teamAColorStr);
             int teamBColor = Color.parseColor(teamBColorStr);
-            scoreAView.setTextColor(teamAColor);
-            scoreBView.setTextColor(teamBColor);
-            updateButtonBackgrounds(teamAColor, teamBColor);
+            scoreAView.setTextColor(isSwapped ? teamBColor : teamAColor);
+            scoreBView.setTextColor(isSwapped ? teamAColor : teamBColor);
+            updateButtonBackgrounds(teamAColor, teamBColor, isSwapped);
             updateRecentPoints(match, teamAColor, teamBColor);
             updatePlayersPage(match, teamAColor, teamBColor);
         } catch (IllegalArgumentException e) {
             Log.w(TAG, "Invalid color format, using defaults", e);
             int defaultTeamAColor = Color.parseColor("#00fbff");
             int defaultTeamBColor = Color.parseColor("#ff0055");
-            scoreAView.setTextColor(defaultTeamAColor);
-            scoreBView.setTextColor(defaultTeamBColor);
-            updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor);
+            scoreAView.setTextColor(isSwapped ? defaultTeamBColor : defaultTeamAColor);
+            scoreBView.setTextColor(isSwapped ? defaultTeamAColor : defaultTeamBColor);
+            updateButtonBackgrounds(defaultTeamAColor, defaultTeamBColor, isSwapped);
             updateRecentPoints(match, defaultTeamAColor, defaultTeamBColor);
             updatePlayersPage(match, defaultTeamAColor, defaultTeamBColor);
         }
@@ -308,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
         updateTimerDisplay();
         maybeShowWinnerAlert(match);
     }
-
 
     private void setupPageSwipeGestures() {
         pageSwipeDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
@@ -543,30 +547,35 @@ public class MainActivity extends AppCompatActivity {
             .show();
     }
 
-    private void updateButtonBackgrounds(int teamAColor, int teamBColor) {
-        ColorStateList cslA = ColorStateList.valueOf(teamAColor);
-        ColorStateList cslB = ColorStateList.valueOf(teamBColor);
+    private void updateButtonBackgrounds(int teamAColor, int teamBColor, boolean isSwapped) {
+        ColorStateList cslLeft = ColorStateList.valueOf(isSwapped ? teamBColor : teamAColor);
+        ColorStateList cslRight = ColorStateList.valueOf(isSwapped ? teamAColor : teamBColor);
 
         if (btnAddPointA != null) {
-            btnAddPointA.setBackgroundTintList(cslA);
+            btnAddPointA.setBackgroundTintList(cslLeft);
+            btnAddPointA.setText(isSwapped ? "+ B" : "+ A");
         }
         if (btnRemovePointA != null) {
-            btnRemovePointA.setBackgroundTintList(cslA);
+            btnRemovePointA.setBackgroundTintList(cslLeft);
+            btnRemovePointA.setText(isSwapped ? "- B" : "- A");
         }
         if (btnAddPointB != null) {
-            btnAddPointB.setBackgroundTintList(cslB);
+            btnAddPointB.setBackgroundTintList(cslRight);
+            btnAddPointB.setText(isSwapped ? "+ A" : "+ B");
         }
         if (btnRemovePointB != null) {
-            btnRemovePointB.setBackgroundTintList(cslB);
+            btnRemovePointB.setBackgroundTintList(cslRight);
+            btnRemovePointB.setText(isSwapped ? "- A" : "- B");
         }
     }
 
-    private void updateScore(boolean add, boolean teamA) {
+    private void updateScore(boolean add, boolean isLeftSide) {
         mMatchRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 MatchData match = task.getResult().getValue(MatchData.class);
                 if (match != null) {
-                    if (teamA) {
+                    boolean targetTeamA = match.isSidesSwapped() ? !isLeftSide : isLeftSide;
+                    if (targetTeamA) {
                         if (add) {
                             match.addPointA();
                         } else {
@@ -579,6 +588,18 @@ public class MainActivity extends AppCompatActivity {
                             match.removePointB();
                         }
                     }
+                    mMatchRef.setValue(match);
+                }
+            }
+        });
+    }
+
+    private void toggleSwapSides() {
+        mMatchRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult().exists()) {
+                MatchData match = task.getResult().getValue(MatchData.class);
+                if (match != null) {
+                    match.setSidesSwapped(!match.isSidesSwapped());
                     mMatchRef.setValue(match);
                 }
             }
@@ -655,6 +676,7 @@ public class MainActivity extends AppCompatActivity {
                     match.setSetsWonB(0);
                     match.setCurrentSet(1);
                     match.setTimerAccumulatedSeconds(0);
+                    match.setSidesSwapped(false);
                     match.setHistory(new java.util.ArrayList<>());
                     match.setTimerIsPaused(true);
                     match.setTimerLastStartedAt(System.currentTimeMillis());
@@ -799,7 +821,7 @@ public class MainActivity extends AppCompatActivity {
         private final String team;
         private final String role;
 
-        private FormationToken(String name, String team, String role) {
+        public FormationToken(String name, String team, String role) {
             this.name = name;
             this.team = team;
             this.role = role;

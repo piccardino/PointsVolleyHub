@@ -30,6 +30,7 @@ public class MatchData {
     private String teamBColor;
     private String servingTeam;
     private String receivingTeam;
+    private boolean sidesSwapped;
     private List<PlayerData> teamAPlayers;
     private List<PlayerData> teamBPlayers;
     private List<PointHistoryItem> history;
@@ -50,6 +51,7 @@ public class MatchData {
         this.teamBColor = "#ff0055";
         this.servingTeam = "A";
         this.receivingTeam = "B";
+        this.sidesSwapped = false;
         this.teamAPlayers = new ArrayList<>();
         this.teamBPlayers = new ArrayList<>();
         this.history = new ArrayList<>();
@@ -78,6 +80,7 @@ public class MatchData {
     public String getTeamBColor() { return teamBColor != null ? teamBColor : "#ff0055"; }
     public String getServingTeam() { return servingTeam; }
     public String getReceivingTeam() { return receivingTeam; }
+    public boolean isSidesSwapped() { return sidesSwapped; }
     public List<PlayerData> getTeamAPlayers() { return teamAPlayers != null ? teamAPlayers : new ArrayList<>(); }
     public List<PlayerData> getTeamBPlayers() { return teamBPlayers != null ? teamBPlayers : new ArrayList<>(); }
     public List<PointHistoryItem> getHistory() { return history != null ? history : new ArrayList<>(); }
@@ -97,6 +100,7 @@ public class MatchData {
     public void setTeamBColor(String teamBColor) { this.teamBColor = teamBColor; }
     public void setServingTeam(String servingTeam) { this.servingTeam = servingTeam; }
     public void setReceivingTeam(String receivingTeam) { this.receivingTeam = receivingTeam; }
+    public void setSidesSwapped(boolean sidesSwapped) { this.sidesSwapped = sidesSwapped; }
     public void setTeamAPlayers(List<PlayerData> teamAPlayers) { this.teamAPlayers = teamAPlayers; }
     public void setTeamBPlayers(List<PlayerData> teamBPlayers) { this.teamBPlayers = teamBPlayers; }
     public void setHistory(List<PointHistoryItem> history) { this.history = history; }
@@ -186,12 +190,11 @@ public class MatchData {
             setsWonB++;
         }
 
+        history = new ArrayList<>();
         scoreA = 0;
         scoreB = 0;
 
-        if (isMatchComplete()) {
-            history = new ArrayList<>();
-        } else {
+        if (!isMatchComplete()) {
             currentSet = Math.min(currentSet + 1, FINAL_SET_NUMBER);
         }
     }

@@ -9,16 +9,90 @@
     <meta name="theme-color" content="#1a1a20">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Volley Hub Pro - 3D Generator</title>
+    <meta name="google-adsense-account" content="ca-pub-9359034077369379">
+    <meta name="description"
+        content="Volley Hub Pro is a free volleyball team generator and random team maker for coaches, players, PE teachers, and tournaments. Build balanced volleyball teams, manage rosters, create lineups, and run brackets.">
+    <meta name="keywords"
+        content="volleyball team generator, volley team generator, random volleyball team generator, random volley team maker, volleyball lineup generator, volleyball roster manager, volleyball tournament bracket">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://volleyhubpro.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://volleyhubpro.com/">
+    <meta property="og:title" content="Volleyball Team Generator | Volley Hub Pro">
+    <meta property="og:description"
+        content="Create balanced random volleyball teams, manage rosters, build lineups, and run tournament brackets with Volley Hub Pro.">
+    <meta property="og:image" content="https://volleyhubpro.com/logo_volley.jpeg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Volleyball Team Generator | Volley Hub Pro">
+    <meta name="twitter:description"
+        content="Free volleyball team generator, random team maker, lineup builder, roster manager, and tournament bracket tool.">
+    <meta name="twitter:image" content="https://volleyhubpro.com/logo_volley.jpeg">
+    <meta name="google-site-verification" content="LS9oRTJq5Kpzc9_3XWd9rZnIIYtYnEuN7r1nMcnueYY" />
+    <title>Volleyball Team Generator | Volley Hub Pro</title>
     <link rel="icon" type="image/jpeg" href="logo_volley.jpeg">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="app.webmanifest">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Volley Hub Pro",
+            "alternateName": [
+                "Volleyball Team Generator",
+                "Volley Team Generator",
+                "Random Volleyball Team Generator"
+            ],
+            "url": "https://volleyhubpro.com/",
+            "applicationCategory": "SportsApplication",
+            "operatingSystem": "Web",
+            "description": "Volley Hub Pro is a free volleyball team generator and random team maker for creating balanced volleyball teams, managing rosters, building lineups, and running tournament brackets.",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "featureList": [
+                "Random volleyball team generator",
+                "Balanced volleyball teams by player rating",
+                "Volleyball roster manager",
+                "3D volleyball lineup builder",
+                "Volleyball tournament bracket and round-robin mode",
+                "Live match and scoreboard tools"
+            ]
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "What is Volley Hub Pro?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Volley Hub Pro is a free web app for generating random volleyball teams, balancing players, managing rosters, building lineups, and organizing tournament brackets."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can I use Volley Hub Pro as a random volleyball team generator?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. Add your players, set ratings if needed, and generate balanced random volleyball teams for training, PE classes, pickup games, or tournaments."
+                    }
+                }
+            ]
+        }
+    </script>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9359034077369379"
+        crossorigin="anonymous"></script>
     <script src="platform.js" defer></script>
     <style>
         :root {
@@ -90,6 +164,15 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: 900;
+        }
+
+        .seo-tagline {
+            margin: -4px 0 0;
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.68rem;
+            line-height: 1.25;
+            letter-spacing: 0.3px;
+            text-align: center;
         }
 
         /* --- SCOREBOARD --- */
@@ -2013,6 +2096,10 @@
                 margin-bottom: 2px;
             }
 
+            .seo-tagline {
+                display: none;
+            }
+
             .scoreboard {
                 transform: scale(0.9);
                 transform-origin: center;
@@ -3223,6 +3310,10 @@
             font-weight: bold;
             color: rgba(255, 255, 255, 0.7);
             white-space: nowrap;
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            z-index: 1500;
         }
 
         .serious-mode-toggle:hover {
@@ -3365,8 +3456,8 @@
             .serious-mode-toggle {
                 padding: 4px 8px;
                 font-size: 0.6rem;
-                bottom: 15px;
-                right: 15px;
+                bottom: 55px;
+                right: 8px;
             }
 
             .serious-mode-toggle-icon svg {
@@ -3493,12 +3584,13 @@
             <button class="panel-toggle" id="mobilePanelToggle" type="button" onclick="toggleMobilePanel()"
                 aria-controls="uiPanelBody" aria-expanded="false">MENU</button>
         </div>
+        <p class="seo-tagline">Free volleyball team generator, random team maker, 3D lineup builder, roster manager, and tournament bracket tool.</p>
 
         <div class="ui-panel-body" id="uiPanelBody">
         <div class="player-list" id="playerList">
-            <div class="list-search" onclick="event.stopPropagation(); document.getElementById('listSearchInput').focus()">
+            <div class="list-search" onclick="event.stopPropagation(); openListSearch()" onmousedown="event.stopPropagation()" onmousemove="event.stopPropagation()">
                 <button type="button" class="list-search-toggle" onclick="event.stopPropagation(); toggleListSearch()" aria-label="Search players">🔍</button>
-                <input type="text" id="listSearchInput" class="list-search-input" placeholder="search..." oninput="filterList()" onblur="if(!this.value)toggleListSearch()">
+                <input type="text" id="listSearchInput" class="list-search-input" placeholder="search..." oninput="filterList()">
             </div>
         </div>
 
@@ -3510,6 +3602,7 @@
                 style="background: linear-gradient(135deg, #00fbff, #ff0055); color: white; border: none;">LIVE</button>
             <button class="btn-icon btn-replay" onclick="location.href='replay-analysis.html'" title="Replay Analysis"
                 style="background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; border: none;">🎬</button>
+            <button class="btn-icon" onclick="location.href='guide/index.html'" title="Volleyball Guides" style="color:#ffeb3b;">📖</button>
             <button class="btn-icon btn-exercise" onclick="location.href='exercise-generator.html'" title="Exercise Generator">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -3580,8 +3673,8 @@
                     <div class="line line-center"></div>
                     <div class="line line-attack la-left"></div>
                     <div class="line line-attack la-right"></div>
-                    <img id="courtLogoA" class="court-logo logo-a" src="" style="display:none;">
-                    <img id="courtLogoB" class="court-logo logo-b" src="" style="display:none;">
+                    <img id="courtLogoA" class="court-logo logo-a" src="" alt="Team A logo" style="display:none;">
+                    <img id="courtLogoB" class="court-logo logo-b" src="" alt="Team B logo" style="display:none;">
                     <div class="net-mesh"></div>
                 </div>
                 <div class="bench bench-a" id="benchA" onclick="renameBench('A')"><span id="benchLabelA">TEAM A</span>
@@ -3915,7 +4008,7 @@
                 style="background: white; color: black; display: flex; align-items: center; justify-content: center; gap: 10px;"
                 onclick="handleGoogleLogin()">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    style="width: 18px; height: 18px;">
+                    alt="Google sign-in" style="width: 18px; height: 18px;">
                 LOG IN WITH GOOGLE
             </button>
         </div>
@@ -3988,12 +4081,21 @@
         function initPlayerListDragScroll() {
             const list = document.getElementById('playerList');
             if (!list) return;
+            if (list.dataset.dragScrollReady === 'true') return;
+            list.dataset.dragScrollReady = 'true';
 
             let isDown = false;
             let startX;
             let scrollLeft;
 
+            const isSearchInteraction = (target) => target && target.closest('.list-search');
+
             list.addEventListener('mousedown', (e) => {
+                if (isSearchInteraction(e.target)) {
+                    isDown = false;
+                    list.style.cursor = 'grab';
+                    return;
+                }
                 isDown = true;
                 list.style.cursor = 'grabbing';
                 startX = e.pageX - list.offsetLeft;
@@ -4012,6 +4114,11 @@
 
             list.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
+                if (isSearchInteraction(e.target)) {
+                    isDown = false;
+                    list.style.cursor = 'grab';
+                    return;
+                }
                 e.preventDefault();
                 const x = e.pageX - list.offsetLeft;
                 const walk = (x - startX) * 1.5;
@@ -4023,6 +4130,7 @@
         let courtViewRotation = 0;
         let coachTeam = 'A';
         let formationRef = null;
+        let localFormationUpdate = false;
 
         // Firebase Auth State Listener
         auth.onAuthStateChanged((user) => {
@@ -4117,6 +4225,8 @@
 
         function saveFormation() {
             if (!currentUserUid) return;
+            localFormationUpdate = true;
+            setTimeout(() => { localFormationUpdate = false; }, 500);
             const data = {
                 scoreA: scoreA,
                 scoreB: scoreB,
@@ -4207,6 +4317,7 @@
             stopFormationSync();
             formationRef = db.ref('users/' + currentUserUid + '/matchData/formation');
             formationRef.on('value', snap => {
+                if (localFormationUpdate) return;
                 const data = snap.val();
                 if (data) {
                     applyFormationData(data);
@@ -5254,19 +5365,34 @@
             });
         }
 
-        function toggleListSearch() {
+        function setListSearchOpen(isOpen, { clear = false } = {}) {
             const div = document.querySelector('.list-search');
             const input = document.getElementById('listSearchInput');
             if (!div || !input) return;
-            
-            if (input.value) {
-                filterList();
-            } else {
-                div.classList.toggle('active');
-                if (div.classList.contains('active')) {
-                    input.focus();
-                }
+
+            div.classList.toggle('active', isOpen);
+
+            if (isOpen) {
+                input.focus();
+                return;
             }
+
+            input.blur();
+            if (clear && input.value) {
+                input.value = '';
+                filterList();
+            }
+        }
+
+        function openListSearch() {
+            setListSearchOpen(true);
+        }
+
+        function toggleListSearch() {
+            const div = document.querySelector('.list-search');
+            if (!div) return;
+
+            setListSearchOpen(!div.classList.contains('active'), { clear: true });
         }
 
         function filterList() {
@@ -5282,9 +5408,7 @@
                 chip.style.display = !query || text.includes(query) ? 'flex' : 'none';
             });
             
-            if (div) {
-                div.classList.toggle('active', !!query);
-            }
+            if (div && query) div.classList.add('active');
         }
 
         function openPlayerDetails(name) {
@@ -8574,7 +8698,7 @@
     </script>
 
     <!-- Serious Mode Toggle (Bottom Right) -->
-    <div class="serious-mode-toggle" id="seriousModeToggle" onclick="toggleSeriousMode()" style="position: fixed; bottom: 20px; right: 20px; z-index: 1500;">
+    <div class="serious-mode-toggle" id="seriousModeToggle" onclick="toggleSeriousMode()">
         <div class="serious-mode-toggle-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
@@ -8665,6 +8789,14 @@
         </svg>
     </button>
 
+    <div style="position:fixed; bottom:0; left:0; right:0; z-index:999; text-align:center; padding:8px; background:rgba(15,15,25,0.92); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.08); font-size:0.65rem; color:rgba(255,255,255,0.4);">
+        <a href="privacy-policy.html" style="color:rgba(255,255,255,0.5); text-decoration:underline; margin:0 8px;">Privacy Policy</a>
+        <a href="cookie-policy.html" style="color:rgba(255,255,255,0.5); text-decoration:underline; margin:0 8px;">Cookie Policy</a>
+        <span style="margin:0 4px; color:rgba(255,255,255,0.2);">|</span>
+        <a href="https://www.instagram.com/volley_hub_mondovi/" target="_blank" style="color:rgba(255,255,255,0.5); text-decoration:none; margin:0 4px;" rel="noopener">Instagram</a>
+        <a href="https://www.youtube.com/@VolleyPallaMondov%C3%AC" target="_blank" style="color:rgba(255,255,255,0.5); text-decoration:none; margin:0 4px;" rel="noopener">YouTube</a>
+        <a href="https://www.tiktok.com/@volley_hub_mondovi" target="_blank" style="color:rgba(255,255,255,0.5); text-decoration:none; margin:0 4px;" rel="noopener">TikTok</a>
+    </div>
 </body>
 
 </html>

@@ -53,12 +53,12 @@
         android:orientation="vertical"
         android:gravity="top|center_horizontal"
         android:layout_marginTop="0dp"
-        android:layout_marginEnd="2dp"
+        android:layout_marginEnd="1dp"
         android:paddingTop="0dp"
         app:layout_constraintTop_toBottomOf="@id/setsView"
         app:layout_constraintBottom_toTopOf="@id/buttonRow"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/teamBSection"
+        app:layout_constraintEnd_toStartOf="@id/btnSwapSides"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintVertical_bias="0.0"
         app:layout_constraintVertical_weight="1">
@@ -75,6 +75,22 @@
 
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/btnSwapSides"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@drawable/ic_swap_horiz"
+        android:background="@drawable/button_swap_flat"
+        android:contentDescription="Swap sides"
+        android:scaleType="fitCenter"
+        android:padding="5dp"
+        app:tint="#FFFFFF"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toTopOf="@id/teamASection"
+        app:layout_constraintBottom_toBottomOf="@id/teamASection"
+        app:layout_constraintStart_toEndOf="@id/teamASection"
+        app:layout_constraintEnd_toStartOf="@id/teamBSection" />
+
     <LinearLayout
         android:id="@+id/teamBSection"
         android:layout_width="0dp"
@@ -82,11 +98,11 @@
         android:orientation="vertical"
         android:gravity="top|center_horizontal"
         android:layout_marginTop="0dp"
-        android:layout_marginStart="2dp"
+        android:layout_marginStart="1dp"
         android:paddingTop="0dp"
         app:layout_constraintTop_toBottomOf="@id/setsView"
         app:layout_constraintBottom_toTopOf="@id/buttonRow"
-        app:layout_constraintStart_toEndOf="@id/teamASection"
+        app:layout_constraintStart_toEndOf="@id/btnSwapSides"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintVertical_bias="0.0"
@@ -300,13 +316,16 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="4dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="20dp">
 
             <LinearLayout
                 android:id="@+id/playersListContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:paddingBottom="16dp" />
         </ScrollView>
     </LinearLayout>
 

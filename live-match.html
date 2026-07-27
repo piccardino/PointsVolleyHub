@@ -7,8 +7,12 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="color-scheme" content="dark only">
     <meta name="theme-color" content="#1a1a20">
+    <meta name="google-adsense-account" content="ca-pub-9359034077369379">
+    <meta name="description" content="Live volleyball match mode with real-time scoreboard, automatic rotations, set management, point history, and match simulation tools.">
     <title>LIVE MATCH MODE - SquadGen3D</title>
     <link rel="icon" type="image/jpeg" href="logo_volley.jpeg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9359034077369379"
+        crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -60,9 +64,11 @@
         /* ===== HEADER / SCOREBOARD ===== */
         .match-header {
             background: var(--glass);
+            -webkit-backdrop-filter: blur(25px);
             backdrop-filter: blur(25px);
             border-bottom: 2px solid var(--border);
             padding: calc(12px + var(--safe-top)) 15px 12px;
+            position: relative;
             z-index: 100;
             box-shadow: 0 4px 40px rgba(0, 0, 0, 0.8);
         }
@@ -72,14 +78,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            padding-left: 55px;
         }
 
         h1 {
             cursor: pointer;
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 1rem;
             background: linear-gradient(90deg, var(--primary), #fff, var(--secondary));
-            -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
@@ -91,6 +97,15 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            padding: 4px;
+            overflow: visible;
+        }
+
+        .header-top-actions {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 10px;
         }
 
         .set-dot {
@@ -100,12 +115,13 @@
             background: var(--glass-light);
             border: 2px solid var(--border);
             transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
         .set-dot.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            box-shadow: 0 0 10px var(--primary);
+            background: transparent;
+            border-color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
         }
 
         .set-dot.won-a {
@@ -125,6 +141,10 @@
             align-items: center;
             gap: 20px;
             padding: 15px 0;
+        }
+
+        .main-scoreboard.sides-swapped {
+            flex-direction: row-reverse;
         }
 
         .team-score {
@@ -199,6 +219,223 @@
             margin-top: 5px;
         }
 
+        .scoreboard-fullscreen-toggle {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            min-height: 38px;
+            padding: 0;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.88);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 0;
+            flex-shrink: 0;
+        }
+
+        .scoreboard-fullscreen-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 18px rgba(0, 251, 255, 0.2);
+        }
+
+        .scoreboard-fullscreen-toggle.is-active {
+            background: rgba(0, 251, 255, 0.12);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .scoreboard-fullscreen-toggle svg {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
+            display: block;
+            pointer-events: none;
+        }
+
+        .scoreboard-fullscreen-info {
+            display: none;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .scoreboard-fullscreen-chip {
+            min-width: 120px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .scoreboard-fullscreen-chip span {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            opacity: 0.68;
+            margin-bottom: 4px;
+        }
+
+        .scoreboard-fullscreen-chip strong {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            color: var(--primary);
+            text-shadow: 0 0 14px rgba(0, 251, 255, 0.26);
+        }
+
+        .match-header.scoreboard-fullscreen {
+            width: 100vw;
+            height: 100vh;
+            padding:
+                max(20px, calc(14px + var(--safe-top)))
+                clamp(16px, 3vw, 40px)
+                max(20px, calc(14px + var(--safe-bottom)));
+            border-bottom: none;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            gap: clamp(10px, 2vh, 24px);
+        }
+
+        .match-header.scoreboard-fullscreen .header-top {
+            position: absolute;
+            top: max(20px, calc(14px + var(--safe-top)));
+            right: clamp(16px, 3vw, 40px);
+            margin-bottom: 0;
+            z-index: 3;
+        }
+
+        .match-header.scoreboard-fullscreen h1 {
+            display: none;
+        }
+
+        .match-header.scoreboard-fullscreen .header-top-actions {
+            justify-content: flex-end;
+        }
+
+        .match-header.scoreboard-fullscreen .set-indicator {
+            gap: 12px;
+            gap: clamp(10px, 1.2vw, 18px);
+        }
+
+        .match-header.scoreboard-fullscreen .set-dot {
+            width: 18px;
+            height: 18px;
+            width: clamp(14px, 1.6vw, 22px);
+            height: clamp(14px, 1.6vw, 22px);
+            border-width: 3px;
+        }
+
+        .match-header.scoreboard-fullscreen .main-scoreboard {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            gap: clamp(10px, 2vw, 30px);
+            padding: 0;
+            margin-top: 30px;
+            margin-top: clamp(24px, 4vh, 48px);
+        }
+
+        .match-header.scoreboard-fullscreen .team-score {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 0 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .match-header.scoreboard-fullscreen .team-score:active {
+            transform: scale(0.96);
+            filter: brightness(1.2);
+        }
+
+        .match-header.scoreboard-fullscreen .team-name {
+            font-size: 2.5rem;
+            font-size: clamp(1.4rem, 3.5vw, 3rem);
+            letter-spacing: 4px;
+            letter-spacing: clamp(2px, 0.5vw, 8px);
+            font-weight: 900;
+            margin-bottom: 8px;
+            margin-bottom: clamp(4px, 1vh, 16px);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .match-header.scoreboard-fullscreen .score-value {
+            font-size: 32vw;
+            font-size: 55vh;
+            font-size: clamp(10rem, 38vw, 62vh);
+            line-height: 0.82;
+            font-weight: 900;
+            text-shadow: 0 0 60px currentColor, 0 0 120px rgba(0, 0, 0, 0.95);
+            letter-spacing: -2px;
+        }
+
+        .match-header.scoreboard-fullscreen .vs-divider {
+            font-size: 2.2rem;
+            font-size: clamp(1.4rem, 3.5vw, 3rem);
+            opacity: 0.35;
+            font-weight: 900;
+            flex-shrink: 0;
+            padding: 0 12px;
+            padding: 0 clamp(6px, 1vw, 20px);
+        }
+
+        .match-header.scoreboard-fullscreen .sets-won {
+            margin-top: 0;
+            font-size: 1.6rem;
+            font-size: clamp(1.2rem, 2.4vw, 2rem);
+            gap: 24px;
+            gap: clamp(16px, 2.5vw, 36px);
+            font-weight: 800;
+        }
+
+        .match-header.scoreboard-fullscreen .scoreboard-fullscreen-info {
+            display: flex;
+            gap: 16px;
+            gap: clamp(12px, 2vw, 24px);
+            margin-top: 8px;
+            margin-top: clamp(4px, 1vh, 12px);
+        }
+
+        .match-header.scoreboard-fullscreen .scoreboard-fullscreen-chip {
+            min-width: 160px;
+            min-width: clamp(130px, 16vw, 220px);
+            padding: 14px 20px;
+            padding: clamp(10px, 1.4vw, 18px) clamp(16px, 2vw, 28px);
+        }
+
+        .match-header.scoreboard-fullscreen .scoreboard-fullscreen-chip span {
+            font-size: 0.88rem;
+            font-size: clamp(0.75rem, 1.1vw, 1rem);
+        }
+
+        .match-header.scoreboard-fullscreen .scoreboard-fullscreen-chip strong {
+            font-size: 2.5rem;
+            font-size: clamp(1.6rem, 3.5vw, 3.2rem);
+        }
+
         /* ===== MAIN CONTENT AREA ===== */
         .main-container {
             flex: 1;
@@ -215,6 +452,7 @@
             bottom: 0;
             width: 350px;
             background: var(--glass);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             border-right: 2px solid var(--border);
             transform: translateX(-100%);
@@ -237,6 +475,7 @@
             width: 40px;
             height: 70px;
             background: var(--glass);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 2px solid var(--border);
             border-left: none;
@@ -399,6 +638,7 @@
         .court-net::before {
             content: "";
             position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
             inset: 0;
             background: repeating-linear-gradient(90deg,
                     transparent,
@@ -695,6 +935,7 @@
             bottom: 0;
             width: 280px;
             background: var(--glass);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             border-left: 2px solid var(--border);
             display: flex;
@@ -763,6 +1004,351 @@
             background: var(--success);
             color: black;
             border-color: var(--success);
+        }
+
+        /* Recovery Modal / Intervallo Recupero */
+        .recovery-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.88);
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: recoveryFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes recoveryFadeIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .recovery-card {
+            background: var(--glass);
+            border: 2px solid var(--primary);
+            border-radius: 24px;
+            padding: 30px 25px;
+            text-align: center;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 0 50px rgba(0, 251, 255, 0.25), 0 20px 40px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+        }
+
+        .recovery-badge {
+            background: rgba(0, 251, 255, 0.12);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .recovery-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin: 0;
+            color: var(--text);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .recovery-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .recovery-timer-box {
+            position: relative;
+            width: 190px;
+            height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            overflow: visible;
+        }
+
+        .recovery-circle-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+            overflow: visible;
+        }
+
+        .recovery-circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 8;
+        }
+
+        .recovery-circle-progress {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+            filter: drop-shadow(0 0 10px var(--primary));
+        }
+
+        .recovery-timer-display {
+            font-size: 2.8rem;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(0, 251, 255, 0.6);
+            z-index: 2;
+        }
+
+        .recovery-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .recovery-btn {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .recovery-btn-skip {
+            background: rgba(255, 0, 85, 0.15);
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        .recovery-btn-skip:hover {
+            background: var(--secondary);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+        }
+
+        .recovery-btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .recovery-btn-secondary:hover {
+            background: var(--glass-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Recovery Timer Toggle Button */
+        .recovery-timer-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--primary);
+            background: rgba(0, 251, 255, 0.1);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .recovery-timer-toggle-btn:hover {
+            box-shadow: 0 0 12px rgba(0, 251, 255, 0.3);
+            background: rgba(0, 251, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .recovery-timer-toggle-btn.is-disabled {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* 3D Cylinder Duration Picker Modal */
+        .picker-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.88);
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: recoveryFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .picker-card {
+            background: var(--glass);
+            border: 2px solid var(--primary);
+            border-radius: 24px;
+            padding: 28px 22px;
+            text-align: center;
+            max-width: 340px;
+            width: 100%;
+            box-shadow: 0 0 50px rgba(0, 251, 255, 0.25), 0 20px 40px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            user-select: none;
+        }
+
+        .cylinder-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .cylinder-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 5px 0;
+            -webkit-perspective: 700px;
+            perspective: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 22px;
+            background: radial-gradient(ellipse at center, rgba(0, 251, 255, 0.08) 0%, rgba(5, 5, 12, 0.95) 100%);
+            border: 2px solid rgba(0, 251, 255, 0.25);
+            box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 251, 255, 0.15);
+            touch-action: none;
+            cursor: ns-resize;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .cylinder-selection-highlight {
+            position: absolute;
+            width: 90%;
+            height: 48px;
+            top: 50%;
+            left: 5%;
+            transform: translateY(-50%);
+            border-top: 2px solid var(--primary);
+            border-bottom: 2px solid var(--primary);
+            background: linear-gradient(90deg, transparent, rgba(0, 251, 255, 0.16), transparent);
+            box-shadow: 0 0 22px rgba(0, 251, 255, 0.35);
+            pointer-events: none;
+            border-radius: 12px;
+            z-index: 2;
+        }
+
+        .cylinder-drum {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+            -webkit-transition: -webkit-transform 0.4s cubic-bezier(0.15, 0.85, 0.35, 1.2);
+            transition: transform 0.4s cubic-bezier(0.15, 0.85, 0.35, 1.2);
+            touch-action: none;
+            will-change: transform;
+        }
+
+        .cylinder-drum.dragging {
+            -webkit-transition: -webkit-transform 0.06s linear !important;
+            transition: transform 0.06s linear !important;
+        }
+
+        .cylinder-item {
+            position: absolute;
+            width: 100%;
+            height: 44px;
+            left: 0;
+            top: calc(50% - 22px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+            -webkit-transition: opacity 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
+            transition: opacity 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
+        }
+
+        .cylinder-item.selected {
+            color: var(--primary);
+            font-size: 1.6rem;
+            text-shadow: 0 0 20px var(--primary);
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 10px rgba(0, 251, 255, 0.8));
+        }
+
+        .cylinder-nav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+        }
+
+        .cylinder-nav-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px var(--primary);
+            transform: scale(1.1);
+        }
+
+        .cylinder-nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        .cylinder-nav-btn:active {
+            transform: scale(0.95);
         }
 
         /* Score Buttons */
@@ -890,8 +1476,10 @@
         /* Simulation Overlay */
         .simulation-overlay {
             position: fixed;
+            top: 0; right: 0; bottom: 0; left: 0;
             inset: 0;
             background: rgba(0, 0, 0, 0.9);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             z-index: 1000;
             display: none;
@@ -1015,8 +1603,10 @@
         /* Match Complete Overlay */
         .match-complete-overlay {
             position: fixed;
+            top: 0; right: 0; bottom: 0; left: 0;
             inset: 0;
             background: rgba(0, 0, 0, 0.95);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             z-index: 2000;
             display: none;
@@ -1255,6 +1845,7 @@
             cursor: pointer;
             z-index: 340;
             box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+            -webkit-backdrop-filter: blur(16px);
             backdrop-filter: blur(16px);
             padding: 0;
             line-height: 0;
@@ -1331,6 +1922,11 @@
             .header-top {
                 gap: 10px;
                 flex-wrap: wrap;
+            }
+
+            .header-top-actions {
+                width: 100%;
+                justify-content: center;
             }
 
             h1 {
@@ -1694,30 +2290,172 @@
             color: white;
             border-color: var(--secondary);
         }
+
+        /* --- SERIOUS MODE --- */
+        body.serious-mode {
+            --primary: #0055ff;
+            --secondary: #ff0044;
+            --bg-color: #111111;
+            --glass: rgba(17, 17, 17, 0.98);
+            --accent: #4b5563;
+        }
+
+        body.serious-mode h1 {
+            background: linear-gradient(90deg, #0055ff, #ffffff, #ff0044);
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            font-size: 1rem;
+        }
+
+        body.serious-mode .team-a .court-player-label {
+            border-color: #0055ff !important;
+            box-shadow: 0 0 20px rgba(0, 85, 255, 0.5) !important;
+            text-shadow: 0 0 8px rgba(0, 85, 255, 0.7) !important;
+        }
+
+        body.serious-mode .team-b .court-player-label {
+            border-color: #ff0044 !important;
+            box-shadow: 0 0 20px rgba(255, 0, 68, 0.5) !important;
+            text-shadow: 0 0 8px rgba(255, 0, 68, 0.7) !important;
+        }
+
+        body.serious-mode .score-value {
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        body.serious-mode .score-value.flash {
+            animation: scoreFlashSerious 0.5s ease;
+        }
+
+        @keyframes scoreFlashSerious {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.15);
+                text-shadow: 0 0 20px currentColor;
+            }
+        }
+
+        .serious-mode-toggle {
+            display: none;
+        }
+
+        /* Back Button */
+        .back-button {
+            position: absolute;
+            top: calc(14px + var(--safe-top));
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1100;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        .back-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        @media (max-width: 650px) {
+            .serious-mode-toggle {
+                padding: 4px 8px;
+                font-size: 0.6rem;
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .serious-mode-toggle-icon svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            .back-button {
+                width: 36px;
+                height: 36px;
+                top: calc(10px + var(--safe-top));
+                left: 10px;
+            }
+
+            .back-button svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* Legacy iOS 12 Flex gap fallbacks */
+        @supports not (gap: 10px) {
+            .header-top > * + *, .set-indicator > * + *, .header-top-actions > * + *,
+            .main-scoreboard > * + *, .sets-won > * + *, .scoreboard-fullscreen-info > * + *,
+            .header-top-actions > * + *, .match-stats-container > * + *, .comparison-row > * + *,
+            .side-panel > * + *, .match-stat-buttons > * + *, .simulation-overlay > * + *,
+            .match-complete-overlay > * + *, .utility-buttons > * + * {
+                margin-left: 8px;
+            }
+            .team-score > * + *, .simulation-overlay > * + *, .match-complete-overlay > * + * {
+                margin-top: 8px;
+            }
+        }
     </style>
 </head>
 
 <body>
     <!-- Header / Scoreboard -->
-    <div class="match-header">
+    <div class="match-header" id="matchHeader">
         <div class="header-top">
             <h1 onclick="backToGenerator()">LIVE MATCH MODE</h1>
-            <div class="set-indicator">
-                <div class="set-dot" id="setDot1"></div>
-                <div class="set-dot" id="setDot2"></div>
-                <div class="set-dot" id="setDot3"></div>
-                <div class="set-dot" id="setDot4"></div>
-                <div class="set-dot" id="setDot5"></div>
+            <div class="header-top-actions">
+                <button type="button" class="recovery-timer-toggle-btn" id="recoveryTimerToggleBtn" onclick="toggleRecoveryTimerSetting()" title="Enable/Disable recovery timer between sets">
+                    <span>⏱️</span>
+                    <span id="recoveryTimerToggleText">Recovery ON</span>
+                </button>
+                <div class="set-indicator">
+                    <div class="set-dot" id="setDot1"></div>
+                    <div class="set-dot" id="setDot2"></div>
+                    <div class="set-dot" id="setDot3"></div>
+                    <div class="set-dot" id="setDot4"></div>
+                    <div class="set-dot" id="setDot5"></div>
+                </div>
+                <button type="button" class="scoreboard-fullscreen-toggle" id="scoreboardFullscreenToggle" aria-label="Apri banner fullscreen" title="Apri banner fullscreen">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 3H3V8M16 3H21V8M21 16V21H16M8 21H3V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </button>
             </div>
         </div>
 
         <div class="main-scoreboard">
-            <div class="team-score">
+            <div class="team-score" onclick="addPoint('A')" title="Clicca per aggiungere punto a Team A">
                 <div class="team-name team-a-name" id="teamAName">TEAM A</div>
                 <div class="score-value score-a" id="scoreA">0</div>
             </div>
             <div class="vs-divider">VS</div>
-            <div class="team-score">
+            <div class="team-score" onclick="addPoint('B')" title="Clicca per aggiungere punto a Team B">
                 <div class="team-name team-b-name" id="teamBName">TEAM B</div>
                 <div class="score-value score-b" id="scoreB">0</div>
             </div>
@@ -1727,6 +2465,17 @@
             <span>Sets: <strong id="setsA">0</strong></span>
             <span>|</span>
             <span><strong id="setsB">0</strong></span>
+        </div>
+
+        <div class="scoreboard-fullscreen-info">
+            <div class="scoreboard-fullscreen-chip">
+                <span>SET</span>
+                <strong id="fullscreenCurrentSet">1</strong>
+            </div>
+            <div class="scoreboard-fullscreen-chip">
+                <span>TIMER</span>
+                <strong id="headerTimerDisplay">00:00</strong>
+            </div>
         </div>
 
     </div>
@@ -1931,7 +2680,8 @@
             teamAColor: '#00fbff',
             teamBColor: '#ff0055',
             matchSource: 'index',
-            lastSavedAt: null
+            lastSavedAt: null,
+            recoveryTimerEnabled: true
         };
         const FORMATION_DATA_KEY = 'formation';
         const DEFAULT_MATCH_SOURCE = 'index';
@@ -1972,14 +2722,22 @@
 
             // 3. Setup UI events
             setupUIEvents();
+            initScoreboardFullscreen();
 
             // 4. Resize handling per il campo tattico
             const wrapper = document.getElementById('tacticalWrapper');
             if (wrapper) {
-                new ResizeObserver(() => {
-                    resizeTacticalCourt();
-                    updateTacticalCourt();
-                }).observe(wrapper);
+                if (window.ResizeObserver) {
+                    new ResizeObserver(() => {
+                        resizeTacticalCourt();
+                        updateTacticalCourt();
+                    }).observe(wrapper);
+                } else {
+                    window.addEventListener('resize', function() {
+                        resizeTacticalCourt();
+                        updateTacticalCourt();
+                    });
+                }
             }
             const court = document.getElementById('courtFloor');
             if (court) court.addEventListener('click', handleCourtRotationClick);
@@ -2177,16 +2935,47 @@
             }
         }
 
+        let isInitialStateLoaded = false;
+
         function applyRemoteState(data) {
+            if (!data) return;
+
+            const prevSetsA = gameState.setsWonA || 0;
+            const prevSetsB = gameState.setsWonB || 0;
+            const prevSetNum = gameState.currentSet || 1;
+            const currentRecoveryTimerEnabled = gameState.recoveryTimerEnabled;
+
             // Aggiorniamo l'oggetto locale con i dati remoti
             gameState = { ...gameState, ...data };
+
+            // Preserviamo la preferenza dell'utente se i dati remoti non specificano recoveryTimerEnabled
+            if (data.recoveryTimerEnabled !== undefined) {
+                gameState.recoveryTimerEnabled = data.recoveryTimerEnabled;
+            } else if (currentRecoveryTimerEnabled !== undefined) {
+                gameState.recoveryTimerEnabled = currentRecoveryTimerEnabled;
+            } else {
+                gameState.recoveryTimerEnabled = true;
+            }
+
+            // Durante la diretta attiva (dopo il caricamento iniziale), verifichiamo se un set è stato vinto da remoto
+            if (isInitialStateLoaded) {
+                const setJustWonRemotely = (gameState.setsWonA > prevSetsA) || (gameState.setsWonB > prevSetsB) || (gameState.currentSet > prevSetNum);
+                if (setJustWonRemotely && !document.getElementById('recoveryOverlay') && getRecoveryTimerEnabled()) {
+                    const winnerName = gameState.setsWonA > prevSetsA ? gameState.teamAName : gameState.teamBName;
+                    startRecoveryTimer(winnerName, `Set ${prevSetNum}`, prevSetNum, gameState.matchComplete);
+                }
+            } else {
+                // Impostiamo il flag dopo aver caricato lo stato iniziale della pagina
+                isInitialStateLoaded = true;
+            }
 
             // Sincronizziamo il timer e aggiorniamo la UI
             syncTimerFromRemote();
             renderLiveMatchUI();
 
             if (gameState.matchComplete) {
-                document.getElementById('matchCompleteOverlay').classList.add('active');
+                const overlay = document.getElementById('matchCompleteOverlay');
+                if (overlay) overlay.classList.add('active');
             }
         }
 
@@ -2200,6 +2989,7 @@
             updateCompNames();
             updateHistoryDisplay();
             updateMobilePanelMetrics();
+            updateRecoveryTimerToggleUI();
         }
 
         function persistLiveMatchState() {
@@ -2272,8 +3062,10 @@
             const timeStr = `${mins}:${secs}`;
             const d1 = document.getElementById('timerDisplay');
             const d2 = document.getElementById('matchTimeDisplay');
+            const d3 = document.getElementById('headerTimerDisplay');
             if (d1) d1.textContent = timeStr;
             if (d2) d2.textContent = timeStr;
+            if (d3) d3.textContent = timeStr;
         }
 
         // Also ensure sidebar toggle updates the court size
@@ -2345,6 +3137,11 @@
 
         // ===== UI UPDATE WRAPPERS =====
         function updateScoreboard() {
+            const mainSb = document.querySelector('.main-scoreboard');
+            if (mainSb) {
+                mainSb.classList.toggle('sides-swapped', !!gameState.sidesSwapped);
+            }
+
             const elA = document.getElementById('scoreA');
             const elB = document.getElementById('scoreB');
             if (elA) elA.textContent = gameState.scoreA;
@@ -2352,8 +3149,15 @@
 
             const setsA = document.getElementById('setsA');
             const setsB = document.getElementById('setsB');
-            if (setsA) setsA.textContent = gameState.setsWonA;
-            if (setsB) setsB.textContent = gameState.setsWonB;
+            if (setsA && setsB) {
+                if (gameState.sidesSwapped) {
+                    setsA.textContent = gameState.setsWonB;
+                    setsB.textContent = gameState.setsWonA;
+                } else {
+                    setsA.textContent = gameState.setsWonA;
+                    setsB.textContent = gameState.setsWonB;
+                }
+            }
 
             const totalPoints = gameState.scoreA + gameState.scoreB;
             const pointDiff = Math.abs(gameState.scoreA - gameState.scoreB);
@@ -2369,6 +3173,9 @@
 
             const status = document.getElementById('matchStatus');
             if (status) status.textContent = gameState.matchComplete ? 'MATCH COMPLETE' : `SET ${gameState.currentSet} IN PROGRESS`;
+
+            const fullscreenCurrentSet = document.getElementById('fullscreenCurrentSet');
+            if (fullscreenCurrentSet) fullscreenCurrentSet.textContent = gameState.currentSet;
 
             updateMiniHistory();
         }
@@ -2464,22 +3271,569 @@
             persistLiveMatchState();
         }
 
+        // ===== RECOVERY TIMER & WHISTLE =====
+        let recoveryTimerInterval = null;
+        let recoveryTimeRemaining = 180;
+        let recoveryIsPaused = false;
+        let globalAudioCtx = null;
+        let globalWhistleAudio = null;
+
+        function unlockAudioOnUserGesture() {
+            try {
+                if (!globalAudioCtx) {
+                    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtxClass) {
+                        globalAudioCtx = new AudioCtxClass();
+                    }
+                }
+                if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+                    globalAudioCtx.resume();
+                }
+                if (!globalWhistleAudio) {
+                    globalWhistleAudio = new Audio('whistle.mp3');
+                    globalWhistleAudio.load();
+                }
+            } catch (e) {
+                console.warn('Audio unlock error:', e);
+            }
+        }
+
+        ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+            document.addEventListener(evt, unlockAudioOnUserGesture, { passive: true });
+        });
+
+        function playWhistleSound(count = 3) {
+            unlockAudioOnUserGesture();
+
+            let usedHtmlAudio = false;
+            try {
+                if (globalWhistleAudio) {
+                    globalWhistleAudio.currentTime = 0;
+                    const p = globalWhistleAudio.play();
+                    if (p !== undefined && p.then) {
+                        p.then(() => {
+                            usedHtmlAudio = true;
+                            // Play remaining blasts if HTML5 audio worked
+                            for (let i = 1; i < count; i++) {
+                                setTimeout(() => {
+                                    try {
+                                        const a = new Audio('whistle.mp3');
+                                        a.play().catch(() => playWhistleSynth(1));
+                                    } catch (e) {
+                                        playWhistleSynth(1);
+                                    }
+                                }, i * 1350);
+                            }
+                        }).catch(err => {
+                            console.warn('HTML5 Audio blocked on iOS, triggering Web Audio synth:', err);
+                            playWhistleSynth(count);
+                        });
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('HTML5 Audio error, triggering Web Audio synth:', e);
+            }
+
+            if (!usedHtmlAudio) {
+                playWhistleSynth(count);
+            }
+        }
+
+        function playWhistleSynth(count = 3) {
+            try {
+                unlockAudioOnUserGesture();
+                const ctx = globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if (!ctx) return;
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+
+                const playBlast = (startTime, duration, startFreq, endFreq) => {
+                    const osc1 = ctx.createOscillator();
+                    const osc2 = ctx.createOscillator();
+                    const lfo = ctx.createOscillator();
+                    const lfoGain = ctx.createGain();
+                    const gain = ctx.createGain();
+
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(startFreq, startTime);
+
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(endFreq, startTime);
+
+                    // Trill modulation (~26 Hz)
+                    lfo.type = 'sine';
+                    lfo.frequency.setValueAtTime(26, startTime);
+                    lfoGain.gain.setValueAtTime(140, startTime);
+
+                    lfo.connect(osc1.frequency);
+                    lfo.connect(osc2.frequency);
+
+                    // Volume envelope
+                    gain.gain.setValueAtTime(0.001, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.35, startTime + 0.04);
+                    gain.gain.setValueAtTime(0.35, startTime + duration - 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc1.start(startTime);
+                    osc2.start(startTime);
+                    lfo.start(startTime);
+
+                    osc1.stop(startTime + duration);
+                    osc2.stop(startTime + duration);
+                    lfo.stop(startTime + duration);
+                };
+
+                const now = ctx.currentTime;
+                const blastLen = 1.25;
+                const gap = 0.4;
+
+                for (let i = 0; i < count; i++) {
+                    const blastStart = now + i * (blastLen + gap);
+                    // Double referee whistle blast: long blast (0.7s), pause (0.15s), short blast (0.35s)
+                    playBlast(blastStart, 0.7, 2800, 3100);
+                    playBlast(blastStart + 0.85, 0.35, 2850, 3150);
+                }
+            } catch (e) {
+                console.warn('Whistle audio synth error:', e);
+            }
+        }
+
+        // ===== FULLSCREEN & OVERLAY HELPERS =====
+        function getOverlayContainer() {
+            return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body;
+        }
+
+        function syncOverlayParenting() {
+            const container = getOverlayContainer();
+            ['recoveryOverlay', 'durationPickerOverlay'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.parentNode !== container) {
+                    container.appendChild(el);
+                }
+            });
+        }
+
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+            document.addEventListener(evt, syncOverlayParenting);
+        });
+
+        // ===== 3D CYLINDER DURATION PICKER & PREFERENCES =====
+        function getRecoveryTimerEnabled() {
+            const stored = localStorage.getItem('squadGen3D_recoveryTimerEnabled');
+            if (stored !== null) return stored === 'true';
+            return gameState.recoveryTimerEnabled !== false;
+        }
+
+        function setRecoveryTimerEnabled(val) {
+            gameState.recoveryTimerEnabled = !!val;
+            localStorage.setItem('squadGen3D_recoveryTimerEnabled', val ? 'true' : 'false');
+        }
+
+        function getRecoveryDurationMinutes() {
+            const stored = localStorage.getItem('squadGen3D_recoveryDurationMinutes');
+            if (stored !== null) {
+                const parsed = parseInt(stored, 10);
+                if (!isNaN(parsed) && parsed > 0) return parsed;
+            }
+            return gameState.recoveryDurationMinutes || 3;
+        }
+
+        function setRecoveryDurationMinutes(mins) {
+            gameState.recoveryDurationMinutes = mins;
+            localStorage.setItem('squadGen3D_recoveryDurationMinutes', mins.toString());
+        }
+
+        let cylinderSelectedIndex = 2; // Default 3 MIN (index 2 in [1..10])
+        const cylinderOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let currentDrumAngle = 0;
+
+        function openDurationPicker() {
+            closeDurationPicker();
+            const currentMins = getRecoveryDurationMinutes();
+            cylinderSelectedIndex = Math.max(0, Math.min(cylinderOptions.length - 1, currentMins - 1));
+            currentDrumAngle = -cylinderSelectedIndex * 36;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'durationPickerOverlay';
+            overlay.className = 'picker-overlay';
+            overlay.innerHTML = `
+                <div class="picker-card">
+                    <div class="recovery-badge">
+                        <span>⏱️</span> SET TIMER
+                    </div>
+                    <h3 class="recovery-title" style="margin: 0;">RECOVERY DURATION</h3>
+                    <p class="recovery-subtitle" style="margin: 0;">Select rest duration between sets</p>
+
+                    <div class="cylinder-controls-row">
+                        <button class="cylinder-nav-btn" onclick="rotateCylinder(1)" title="Increase minutes">▲</button>
+
+                        <div class="cylinder-wrapper" id="cylinderWrapper">
+                            <div class="cylinder-selection-highlight"></div>
+                            <div class="cylinder-drum" id="cylinderDrum"></div>
+                        </div>
+
+                        <button class="cylinder-nav-btn" onclick="rotateCylinder(-1)" title="Decrease minutes">▼</button>
+                    </div>
+
+                    <div class="recovery-actions" style="margin-top: 10px;">
+                        <button class="recovery-btn recovery-btn-secondary" onclick="closeDurationPicker()">
+                            Cancel
+                        </button>
+                        <button class="recovery-btn recovery-btn-skip" style="background: var(--primary); color: #000; border-color: var(--primary);" onclick="confirmDurationSelection()">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+            getOverlayContainer().appendChild(overlay);
+
+            build3DDrumItems();
+
+            const wrapper = document.getElementById('cylinderWrapper');
+            if (wrapper) {
+                let startY = 0;
+                let startAngle = 0;
+                let isDragging = false;
+
+                const getClientY = (e) => {
+                    if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
+                    if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
+                    return e.clientY;
+                };
+
+                const startDrag = (e) => {
+                    isDragging = true;
+                    startY = getClientY(e);
+                    startAngle = currentDrumAngle;
+                };
+
+                const moveDrag = (e) => {
+                    if (!isDragging) return;
+                    if (e.cancelable) e.preventDefault();
+                    const currentY = getClientY(e);
+                    const deltaY = startY - currentY;
+                    currentDrumAngle = startAngle + (deltaY * 0.85);
+
+                    const rawIndex = Math.round(-currentDrumAngle / 36);
+                    cylinderSelectedIndex = Math.max(0, Math.min(cylinderOptions.length - 1, rawIndex));
+
+                    updateDrumRotation(true);
+                };
+
+                const endDrag = (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    selectCylinderIndex(cylinderSelectedIndex);
+                };
+
+                // Touch Events for Mobile Safari / iPad / Android
+                wrapper.addEventListener('touchstart', startDrag, { passive: true });
+                wrapper.addEventListener('touchmove', moveDrag, { passive: false });
+                wrapper.addEventListener('touchend', endDrag, { passive: true });
+                wrapper.addEventListener('touchcancel', endDrag, { passive: true });
+
+                // Pointer Events for Desktop Mouse / Windows Touch
+                wrapper.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType === 'touch') return;
+                    startDrag(e);
+                    try { wrapper.setPointerCapture(e.pointerId); } catch(err){}
+                });
+
+                wrapper.addEventListener('pointermove', (e) => {
+                    if (e.pointerType === 'touch') return;
+                    moveDrag(e);
+                });
+
+                wrapper.addEventListener('pointerup', (e) => {
+                    if (e.pointerType === 'touch') return;
+                    try { wrapper.releasePointerCapture(e.pointerId); } catch(err){}
+                    endDrag(e);
+                });
+
+                wrapper.addEventListener('pointercancel', (e) => {
+                    if (e.pointerType === 'touch') return;
+                    endDrag(e);
+                });
+
+                // Mouse Wheel support: scroll down -> next item (higher min), scroll up -> previous item
+                wrapper.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    if (e.deltaY > 0) rotateCylinder(1);
+                    else if (e.deltaY < 0) rotateCylinder(-1);
+                }, { passive: false });
+            }
+        }
+
+        function closeDurationPicker() {
+            const overlay = document.getElementById('durationPickerOverlay');
+            if (overlay) overlay.remove();
+        }
+
+        function build3DDrumItems() {
+            const drum = document.getElementById('cylinderDrum');
+            if (!drum) return;
+            drum.innerHTML = '';
+            const radius = 95; // 3D cylinder radius in px
+
+            cylinderOptions.forEach((mins, idx) => {
+                const item = document.createElement('div');
+                item.id = `cylinderItem_${idx}`;
+                item.className = `cylinder-item ${idx === cylinderSelectedIndex ? 'selected' : ''}`;
+                
+                // Mount each item permanently onto the 3D cylinder surface (36deg step)
+                const itemAngle = idx * 36;
+                item.style.transform = `rotateX(${itemAngle}deg) translateZ(${radius}px)`;
+                item.textContent = `${mins} MINUTES`;
+                
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    selectCylinderIndex(idx);
+                };
+                drum.appendChild(item);
+            });
+
+            updateDrumRotation(false);
+        }
+
+        function updateDrumRotation(isDragging = false) {
+            const drum = document.getElementById('cylinderDrum');
+            if (!drum) return;
+
+            if (isDragging) {
+                drum.classList.add('dragging');
+            } else {
+                drum.classList.remove('dragging');
+            }
+
+            drum.style.transform = `rotateX(${currentDrumAngle}deg)`;
+
+            cylinderOptions.forEach((_, idx) => {
+                const item = document.getElementById(`cylinderItem_${idx}`);
+                if (item) {
+                    const isSelected = (idx === cylinderSelectedIndex);
+                    if (isSelected) {
+                        item.classList.add('selected');
+                        item.style.opacity = '1';
+                    } else {
+                        item.classList.remove('selected');
+                        const diff = Math.abs(idx - cylinderSelectedIndex);
+                        item.style.opacity = Math.max(0.12, 1 - diff * 0.35).toString();
+                    }
+                }
+            });
+        }
+
+        function selectCylinderIndex(index) {
+            cylinderSelectedIndex = Math.max(0, Math.min(cylinderOptions.length - 1, index));
+            currentDrumAngle = -cylinderSelectedIndex * 36;
+            updateDrumRotation(false);
+        }
+
+        function rotateCylinder(step) {
+            const newIndex = cylinderSelectedIndex + step;
+            if (newIndex >= 0 && newIndex < cylinderOptions.length) {
+                selectCylinderIndex(newIndex);
+            }
+        }
+
+        function confirmDurationSelection() {
+            const chosenMins = cylinderOptions[cylinderSelectedIndex] || 3;
+            setRecoveryDurationMinutes(chosenMins);
+            setRecoveryTimerEnabled(true);
+            closeDurationPicker();
+            updateRecoveryTimerToggleUI();
+            persistLiveMatchState();
+            if (typeof showToast === 'function') {
+                showToast(`Recovery Timer set to ${chosenMins} min ⏱️`);
+            }
+        }
+
+        function toggleRecoveryTimerSetting() {
+            const isCurrentlyEnabled = getRecoveryTimerEnabled();
+            if (isCurrentlyEnabled) {
+                // Disable immediately
+                setRecoveryTimerEnabled(false);
+                updateRecoveryTimerToggleUI();
+                persistLiveMatchState();
+                if (typeof showToast === 'function') {
+                    showToast("Recovery Timer disabled ⏸️");
+                }
+            } else {
+                // Open 3D picker
+                openDurationPicker();
+            }
+        }
+
+        function updateRecoveryTimerToggleUI() {
+            const btn = document.getElementById('recoveryTimerToggleBtn');
+            const text = document.getElementById('recoveryTimerToggleText');
+            const isEnabled = getRecoveryTimerEnabled();
+            const durationMins = getRecoveryDurationMinutes();
+            if (btn && text) {
+                if (isEnabled) {
+                    btn.classList.remove('is-disabled');
+                    text.textContent = `Recovery ON (${durationMins}m)`;
+                } else {
+                    btn.classList.add('is-disabled');
+                    text.textContent = 'Recovery OFF';
+                }
+            }
+        }
+
+        window.toggleRecoveryTimerSetting = toggleRecoveryTimerSetting;
+        window.openDurationPicker = openDurationPicker;
+        window.closeDurationPicker = closeDurationPicker;
+        window.rotateCylinder = rotateCylinder;
+        window.confirmDurationSelection = confirmDurationSelection;
+
+        function stopRecoveryTimer() {
+            if (recoveryTimerInterval) {
+                clearInterval(recoveryTimerInterval);
+                recoveryTimerInterval = null;
+            }
+            const overlay = document.getElementById('recoveryOverlay');
+            if (overlay) overlay.remove();
+        }
+
+        function startRecoveryTimer(winnerName, scoreSummary, setNum, isMatchEnd) {
+            stopRecoveryTimer();
+            const durationMins = getRecoveryDurationMinutes();
+            const totalSecs = durationMins * 60;
+            recoveryTimeRemaining = totalSecs;
+            recoveryIsPaused = false;
+
+            const initialMinsStr = durationMins.toString().padStart(2, '0');
+
+            const overlay = document.createElement('div');
+            overlay.id = 'recoveryOverlay';
+            overlay.className = 'recovery-overlay';
+            overlay.innerHTML = `
+                <div class="recovery-card">
+                    <div class="recovery-badge">
+                        <span>⏱️</span> REST INTERVAL (${durationMins} MIN)
+                    </div>
+                    <h3 class="recovery-title">${isMatchEnd ? 'MATCH COMPLETED' : 'SET COMPLETED'}</h3>
+                    <p class="recovery-subtitle">${winnerName} won Set ${setNum} (${scoreSummary})</p>
+                    
+                    <div class="recovery-timer-box">
+                        <svg class="recovery-circle-svg" viewBox="0 0 180 180" style="overflow: visible;">
+                            <circle class="recovery-circle-bg" cx="90" cy="90" r="70"></circle>
+                            <circle id="recoveryProgressCircle" class="recovery-circle-progress" cx="90" cy="90" r="70" style="stroke-dasharray: 440; stroke-dashoffset: 0;"></circle>
+                        </svg>
+                        <div id="recoveryTimeDisplay" class="recovery-timer-display">${initialMinsStr}:00</div>
+                    </div>
+
+                    <div id="recoveryStatusText" style="font-size: 0.8rem; color: var(--primary); font-weight: 700; min-height: 20px;">
+                        Rest interval between sets in progress...
+                    </div>
+
+                    <div class="recovery-actions">
+                        <button class="recovery-btn recovery-btn-secondary" onclick="togglePauseRecoveryTimer()" id="recoveryPauseBtn">
+                            Pause
+                        </button>
+                        <button class="recovery-btn recovery-btn-secondary" onclick="addMinuteToRecovery()">
+                            +1 Min
+                        </button>
+                        <button class="recovery-btn recovery-btn-skip" onclick="stopRecoveryTimer()">
+                            Skip
+                        </button>
+                    </div>
+                </div>
+            `;
+            getOverlayContainer().appendChild(overlay);
+
+            const updateDisplay = () => {
+                const mins = Math.floor(recoveryTimeRemaining / 60).toString().padStart(2, '0');
+                const secs = (recoveryTimeRemaining % 60).toString().padStart(2, '0');
+                const displayEl = document.getElementById('recoveryTimeDisplay');
+                const circleEl = document.getElementById('recoveryProgressCircle');
+                if (displayEl) displayEl.textContent = `${mins}:${secs}`;
+                if (circleEl) {
+                    const offset = 440 * (1 - recoveryTimeRemaining / totalSecs);
+                    circleEl.style.strokeDashoffset = Math.max(0, Math.min(440, offset));
+                }
+            };
+
+            updateDisplay();
+
+            recoveryTimerInterval = setInterval(() => {
+                if (recoveryIsPaused) return;
+                recoveryTimeRemaining--;
+                updateDisplay();
+
+                if (recoveryTimeRemaining <= 0) {
+                    clearInterval(recoveryTimerInterval);
+                    recoveryTimerInterval = null;
+                    playWhistleSound();
+                    const statusText = document.getElementById('recoveryStatusText');
+                    if (statusText) {
+                        statusText.textContent = '🔔 TIME EXPIRED! START WHISTLE';
+                        statusText.style.color = '#00ff88';
+                    }
+                    const pauseBtn = document.getElementById('recoveryPauseBtn');
+                    if (pauseBtn) pauseBtn.style.display = 'none';
+
+                    // Auto-close overlay after 3 whistle blasts (~4.8s)
+                    setTimeout(() => {
+                        stopRecoveryTimer();
+                    }, 4800);
+                }
+            }, 1000);
+        }
+
+        function togglePauseRecoveryTimer() {
+            recoveryIsPaused = !recoveryIsPaused;
+            const btn = document.getElementById('recoveryPauseBtn');
+            if (btn) btn.textContent = recoveryIsPaused ? 'Resume' : 'Pause';
+        }
+
+        function addMinuteToRecovery() {
+            recoveryTimeRemaining += 60;
+            const displayEl = document.getElementById('recoveryTimeDisplay');
+            if (displayEl) {
+                const mins = Math.floor(recoveryTimeRemaining / 60).toString().padStart(2, '0');
+                const secs = (recoveryTimeRemaining % 60).toString().padStart(2, '0');
+                displayEl.textContent = `${mins}:${secs}`;
+            }
+        }
+
+        window.startRecoveryTimer = startRecoveryTimer;
+        window.stopRecoveryTimer = stopRecoveryTimer;
+        window.playWhistleSound = playWhistleSound;
+
         function checkSetWin() {
             const minScore = 25;
             const winBy = 2;
             if ((gameState.scoreA >= minScore || gameState.scoreB >= minScore) && Math.abs(gameState.scoreA - gameState.scoreB) >= winBy) {
+                const winnerTeam = gameState.scoreA > gameState.scoreB ? 'A' : 'B';
+                const winnerName = winnerTeam === 'A' ? gameState.teamAName : gameState.teamBName;
+                const scoreSummary = `${gameState.scoreA} - ${gameState.scoreB}`;
+                const setNum = gameState.currentSet;
+
                 if (gameState.scoreA > gameState.scoreB) gameState.setsWonA++;
                 else gameState.setsWonB++;
 
+                let isMatchEnd = false;
                 if (gameState.setsWonA >= 3 || gameState.setsWonB >= 3) {
                     gameState.matchComplete = true;
                     pauseTimer();
+                    isMatchEnd = true;
                 } else {
                     gameState.currentSet++;
                     gameState.scoreA = 0;
                     gameState.scoreB = 0;
                     gameState.rotationA = 0;
                     gameState.rotationB = 0;
+                }
+
+                if (gameState.recoveryTimerEnabled !== false) {
+                    startRecoveryTimer(winnerName, scoreSummary, setNum, isMatchEnd);
                 }
             }
         }
@@ -2516,7 +3870,7 @@
                             <span class="court-player-num">${player.num || index + 1}</span>
                             <span class="court-player-name" style="color:#fff;">${player.name || 'Player'}</span>
                         </div>
-                        <img class="court-player-sprite" src="${spritePath}" onerror="this.src='Sprites/TEAM%20${teamKey}/${teamKey}male${suffix}.png'">
+                        <img class="court-player-sprite" src="${spritePath}" alt="${player.name || 'Player'}" onerror="this.src='Sprites/TEAM%20${teamKey}/${teamKey}male${suffix}.png'">
                     `;
                     court.appendChild(el);
                 });
@@ -2653,11 +4007,17 @@
         // ===== UI UTILS =====
         function setupUIEvents() {
             document.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                if (key === 'f') {
+                    e.preventDefault();
+                    toggleScoreboardFullscreen();
+                    return;
+                }
                 if (gameState.matchComplete) return;
-                if (e.key === 'a' || e.key === 'ArrowLeft') addPoint('A');
-                else if (e.key === 'd' || e.key === 'ArrowRight') addPoint('B');
+                if (key === 'a' || e.key === 'ArrowLeft') addPoint('A');
+                else if (key === 'd' || e.key === 'ArrowRight') addPoint('B');
                 else if (e.key === ' ') { e.preventDefault(); gameState.timerIsPaused ? startTimer() : pauseTimer(); }
-                else if (e.key === 't') toggleSidePanel();
+                else if (key === 't') toggleSidePanel();
             });
         }
 
@@ -2700,17 +4060,30 @@
         }
 
         function updateTeamNames() {
-            ['teamAName', 'teamBName', 'btnTeamA', 'btnTeamB'].forEach(id => {
+            ['teamAName', 'teamBName', 'compTeamAName', 'compTeamBName', 'btnTeamA', 'btnTeamB'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.textContent = id.includes('A') ? gameState.teamAName : gameState.teamBName;
+                if (el) el.textContent = id.includes('A') ? (gameState.teamAName || 'TEAM A') : (gameState.teamBName || 'TEAM B');
             });
+            updateCompNames();
         }
 
         function updateCompNames() {
-            const a = document.getElementById('compTeamAName');
-            const b = document.getElementById('compTeamBName');
-            if (a) a.textContent = gameState.teamAName.substring(0, 8);
-            if (b) b.textContent = gameState.teamBName.substring(0, 8);
+            const teamAEl = document.getElementById('teamAName') || document.getElementById('btnTeamA');
+            const teamBEl = document.getElementById('teamBName') || document.getElementById('btnTeamB');
+            const compA = document.getElementById('compTeamAName');
+            const compB = document.getElementById('compTeamBName');
+            
+            if (compA && teamAEl && teamAEl.textContent.trim()) {
+                compA.textContent = teamAEl.textContent.trim();
+            } else if (compA) {
+                compA.textContent = gameState.teamAName || 'TEAM A';
+            }
+
+            if (compB && teamBEl && teamBEl.textContent.trim()) {
+                compB.textContent = teamBEl.textContent.trim();
+            } else if (compB) {
+                compB.textContent = gameState.teamBName || 'TEAM B';
+            }
         }
 
         function addToHistory(time, team, causedRotation) {
@@ -2751,6 +4124,84 @@
             root.style.setProperty('--mobile-controls-panel-height', `${Math.ceil(panel.getBoundingClientRect().height)}px`);
         }
 
+        function getFullscreenElement() {
+            return document.fullscreenElement || document.webkitFullscreenElement || null;
+        }
+
+        function getScoreboardFullscreenEnterIcon() {
+            return `
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 3H3V8M16 3H21V8M21 16V21H16M8 21H3V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+            `;
+        }
+
+        function getScoreboardFullscreenExitIcon() {
+            return `
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 3H3V9M15 3H21V9M21 15V21H15M9 21H3V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M9 9H5M9 9V5M15 9H19M15 9V5M15 15H19M15 15V19M9 15H5M9 15V19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+            `;
+        }
+
+        function updateScoreboardFullscreenUI() {
+            const header = document.getElementById('matchHeader');
+            const button = document.getElementById('scoreboardFullscreenToggle');
+            if (!header || !button) return;
+
+            const isActive = getFullscreenElement() === header;
+            header.classList.toggle('scoreboard-fullscreen', isActive);
+            button.classList.toggle('is-active', isActive);
+            button.innerHTML = isActive ? getScoreboardFullscreenExitIcon() : getScoreboardFullscreenEnterIcon();
+            button.setAttribute('aria-label', isActive ? 'Esci dal banner fullscreen' : 'Apri banner fullscreen');
+            button.title = isActive ? 'Esci dal banner fullscreen' : 'Apri banner fullscreen';
+        }
+
+        async function toggleScoreboardFullscreen() {
+            const header = document.getElementById('matchHeader');
+            if (!header) return;
+
+            try {
+                if (getFullscreenElement() === header) {
+                    if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                    return;
+                }
+
+                if (header.requestFullscreen) {
+                    await header.requestFullscreen();
+                } else if (header.webkitRequestFullscreen) {
+                    header.webkitRequestFullscreen();
+                } else {
+                    showToast('Fullscreen non supportato su questo dispositivo');
+                }
+            } catch (error) {
+                console.error('Errore fullscreen banner:', error);
+                showToast('Impossibile aprire il banner fullscreen');
+            }
+        }
+
+        function initScoreboardFullscreen() {
+            const header = document.getElementById('matchHeader');
+            const button = document.getElementById('scoreboardFullscreenToggle');
+            if (!header || !button) return;
+
+            const supported = !!(header.requestFullscreen || header.webkitRequestFullscreen);
+            if (!supported) {
+                button.style.display = 'none';
+                return;
+            }
+
+            button.addEventListener('click', toggleScoreboardFullscreen);
+            document.addEventListener('fullscreenchange', updateScoreboardFullscreenUI);
+            document.addEventListener('webkitfullscreenchange', updateScoreboardFullscreenUI);
+            updateScoreboardFullscreenUI();
+        }
+
         function toggleMobileControls() {
             const p = document.getElementById('rightPanel');
             const toggle = document.getElementById('mobileToggle');
@@ -2779,13 +4230,22 @@
 
         function resetMatch() {
             if (!confirm('Davvero vuoi resettare il match?')) return;
+            detachLiveMatchSync();
             gameState.scoreA = 0; gameState.scoreB = 0; gameState.setsWonA = 0; gameState.setsWonB = 0;
             gameState.currentSet = 1; gameState.history = []; gameState.matchComplete = false;
             gameState.rotationA = 0; gameState.rotationB = 0;
+            gameState.servingTeam = 'A';
+            gameState.servingTeamLocked = false;
+            gameState.receivingTeam = 'B';
+            gameState.timerAccumulatedSeconds = 0;
+            gameState.timerLastStartedAt = 0;
+            gameState.timerIsPaused = true;
             resetTimer();
+            storeProgressLocally({ ...gameState, savedAt: new Date().toISOString() });
+            saveMatchStateToFirebase(gameState);
             renderLiveMatchUI();
-            persistLiveMatchState();
             document.getElementById('matchCompleteOverlay').classList.remove('active');
+            attachLiveMatchSync();
         }
 
         function newMatch() {
@@ -2815,11 +4275,32 @@
         window.manualRotate = manualRotate;
         window.showToast = showToast;
         window.toggleMobileControls = toggleMobileControls;
+        window.toggleScoreboardFullscreen = toggleScoreboardFullscreen;
         window.resetMatch = resetMatch;
         window.newMatch = newMatch;
         window.backToGenerator = backToGenerator;
         window.updateTacticalCourt = updateTacticalCourt;
+
+        // --- BACK BUTTON ---
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'MatchArena.html';
+            }
+        }
+
+        // Expose to global scope
+        window.goBack = goBack;
     </script>
+
+    <!-- Back Button -->
+    <button class="back-button" id="backButton" onclick="goBack()" title="Go Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+    </button>
 </body>
 
 </html>
