@@ -59,26 +59,26 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 adb -d install app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## Nuove Funzionalità
+
+### 🔄 Conferma al Reset
+- Premendo il pulsante **RESET**, viene mostrato un popup di conferma (*"Resetta Partita? Vuoi davvero azzerare punteggio, set e timer?"*) per prevenire azzeramenti accidentali durante il gioco.
+
+### 🚀 OTA Auto-Updater (Senza ADB via GitHub Releases)
+- **Controllo automatico all'avvio**: l'app verifica se è presente una nuova versione su GitHub.
+- **Controllo manuale**: nella schermata dei giocatori/opzioni (swipe laterale) è presente il pulsante **"AGGIORNAMENTO OTA"**.
+- **Installazione 1-Tap**: scarica l'APK direttamente dall'orologio e lancia il Package Installer nativo di Wear OS senza dover collegare cavi o usare comandi ADB.
+- **Rilascio con GitHub Actions**: quando crei un tag (es. `git tag v1.1 && git push origin v1.1`), GitHub compila e pubblica automaticamente la release con l'APK allegato.
+
 ## Utilizzo
 
 1. **Login**: Inserisci email e password del tuo account Firebase
 2. **Aggiungi Punto**: Premi `+ A` o `+ B` per aggiungere un punto
 3. **Rimuovi Punto**: Premi `- A` o `- B` per rimuovere un punto
 4. **Timer**: Premi `START` per avviare, `STOP` per fermare
-5. **Reset**: Premi `RESET` per azzerare partita e timer
-6. **Logout**: Premi `ESC` per uscire
-
-## Colori Team
-
-- **Team A**: Ciano (#00fbff)
-- **Team B**: Rosa (#ff0055)
-- **Timer**: Verde quando attivo, Arancione quando fermo
-
-## Requisiti
-
-- Wear OS 3.0+ (API 30+)
-- Connessione Internet per Firebase
-- Firebase project configurato
+5. **Reset**: Premi `RESET` (ti verrà chiesta conferma prima di azzerare)
+6. **Logout**: Premi `EXIT` per uscire
+7. **Aggiornamento OTA**: Fai swipe a sinistra verso la pagina giocatori e tocca **"AGGIORNAMENTO OTA"**
 
 ## Note
 

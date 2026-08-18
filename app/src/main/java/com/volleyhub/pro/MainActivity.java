@@ -62,7 +62,10 @@ public class MainActivity extends AppCompatActivity {
     private Button btnResetMatch;
     private Button btnExit;
     private Button btnGenerateTeams;
+    private Button btnCheckUpdates;
+    private TextView appVersionText;
     private GestureDetector pageSwipeDetector;
+    private UpdateManager updateManager;
 
     private Handler timerHandler;
     private Runnable timerRunnable;
@@ -117,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
         btnResetMatch = findViewById(R.id.btnResetMatch);
         btnExit = findViewById(R.id.btnExit);
         btnGenerateTeams = findViewById(R.id.btnGenerateTeams);
+        btnCheckUpdates = findViewById(R.id.btnCheckUpdates);
+        appVersionText = findViewById(R.id.appVersionText);
 
         btnAddPointA.setOnClickListener(v -> updateScore(true, true));
         btnRemovePointA.setOnClickListener(v -> updateScore(false, true));
@@ -131,7 +136,25 @@ public class MainActivity extends AppCompatActivity {
         if (btnGenerateTeams != null) {
             btnGenerateTeams.setOnClickListener(v -> generateTeams());
         }
+        if (btnCheckUpdates != null) {
+            btnCheckUpdates.setOnClickListener(v -> {
+                if (updateManager != null) {
+                    updateManager.checkForUpdates(false);
+                }
+            });
+        }
+        if (appVersionText != null) {
+            try {
+                String ver = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                appVersionText.setText("PointsVolleyHub v" + (ver != null ? ver : "1.0"));
+            } catch (Exception e) {
+                appVersionText.setText("PointsVolleyHub v1.0");
+            }
+        }
         setupPageSwipeGestures();
+
+        updateManager = new UpdateManager(this);
+        updateManager.checkForUpdates(true);
 
         ColorStateList darkGray = ColorStateList.valueOf(Color.parseColor("#1c1c1c"));
         btnToggleTimer.setBackgroundTintList(darkGray);
@@ -575,23 +598,53 @@ public class MainActivity extends AppCompatActivity {
                 MatchData match = task.getResult().getValue(MatchData.class);
                 if (match != null) {
                     boolean targetTeamA = match.isSidesSwapped() ? !isLeftSide : isLeftSide;
-                    if (targetTeamA) {
-                        if (add) {
-                            match.addPointA();
-                        } else {
-                            match.removePointA();
+                    if (add) {
+                        if (match.isMatchComplete()) {
+                            Toast.makeText(MainActivity.this, "Partita già conclusa", Toast.LENGTH_SHORT).show();
+                            return;
                         }
+
+                        if (match.isSetWinningPoint(targetTeamA)) {
+                            showSetPointConfirmationDialog(match, targetTeamA);
+                            return;
+                        }
+
+                        match.addPointOnly(targetTeamA);
+                        mMatchRef.setValue(match);
                     } else {
-                        if (add) {
-                            match.addPointB();
+                        if (targetTeamA) {
+                            match.removePointA();
                         } else {
                             match.removePointB();
                         }
+                        mMatchRef.setValue(match);
                     }
-                    mMatchRef.setValue(match);
                 }
             }
         });
+    }
+
+    private void showSetPointConfirmationDialog(MatchData match, boolean targetTeamA) {
+        int projectedA = targetTeamA ? match.getScoreA() + 1 : match.getScoreA();
+        int projectedB = targetTeamA ? match.getScoreB() : match.getScoreB() + 1;
+        String winningTeamName = targetTeamA ? match.getTeamAName() : match.getTeamBName();
+        int currentSet = match.getCurrentSet();
+
+        new AlertDialog.Builder(this)
+                .setTitle("Fine Set " + currentSet + "?")
+                .setMessage(winningTeamName + " vince il set (" + projectedA + " - " + projectedB + ").\n\nVuoi passare al prossimo set o modificare il punteggio?")
+                .setPositiveButton("Prossimo Set", (dialog, which) -> {
+                    match.completeCurrentSet(targetTeamA);
+                    mMatchRef.setValue(match);
+                    Toast.makeText(MainActivity.this, "Set " + currentSet + " assegnato a " + winningTeamName, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Solo Punto", (dialog, which) -> {
+                    match.addPointOnly(targetTeamA);
+                    mMatchRef.setValue(match);
+                    Toast.makeText(MainActivity.this, "Punteggio: " + projectedA + " - " + projectedB, Toast.LENGTH_SHORT).show();
+                })
+                .setNeutralButton("Annulla", null)
+                .show();
     }
 
     private void toggleSwapSides() {
@@ -666,6 +719,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resetMatch() {
+        new AlertDialog.Builder(this)
+                .setTitle("Resetta Partita?")
+                .setMessage("Vuoi davvero azzerare punteggio, set e timer?")
+                .setPositiveButton("Sì", (dialog, which) -> executeResetMatch())
+                .setNegativeButton("Annulla", null)
+                .show();
+    }
+
+    private void executeResetMatch() {
         mMatchRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult().exists()) {
                 MatchData match = task.getResult().getValue(MatchData.class);
@@ -681,6 +743,7 @@ public class MainActivity extends AppCompatActivity {
                     match.setTimerIsPaused(true);
                     match.setTimerLastStartedAt(System.currentTimeMillis());
                     mMatchRef.setValue(match);
+                    Toast.makeText(MainActivity.this, "Partita resettata", Toast.LENGTH_SHORT).show();
                 }
             }
         });

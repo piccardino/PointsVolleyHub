@@ -168,8 +168,51 @@ public class MatchData {
         return setsWonA >= SETS_TO_WIN_MATCH || setsWonB >= SETS_TO_WIN_MATCH;
     }
 
-    private boolean isFinalSet() {
+    public boolean isFinalSet() {
         return currentSet >= FINAL_SET_NUMBER;
+    }
+
+    public void addPointOnly(boolean targetTeamA) {
+        if (isMatchComplete()) {
+            return;
+        }
+        if (targetTeamA) {
+            scoreA++;
+            addHistoryPoint("A", getCurrentHistoryTime());
+        } else {
+            scoreB++;
+            addHistoryPoint("B", getCurrentHistoryTime());
+        }
+    }
+
+    public boolean isSetWinningPoint(boolean targetTeamA) {
+        int projectedA = targetTeamA ? scoreA + 1 : scoreA;
+        int projectedB = targetTeamA ? scoreB : scoreB + 1;
+        int targetScore = getPointsToWinCurrentSet();
+        int scoreDiff = Math.abs(projectedA - projectedB);
+        return (projectedA >= targetScore || projectedB >= targetScore) && scoreDiff >= MIN_WIN_MARGIN;
+    }
+
+    public boolean isCurrentScoreSetWon() {
+        int targetScore = getPointsToWinCurrentSet();
+        int scoreDiff = Math.abs(scoreA - scoreB);
+        return (scoreA >= targetScore || scoreB >= targetScore) && scoreDiff >= MIN_WIN_MARGIN;
+    }
+
+    public void completeCurrentSet(boolean teamAWon) {
+        if (teamAWon) {
+            setsWonA++;
+        } else {
+            setsWonB++;
+        }
+
+        history = new ArrayList<>();
+        scoreA = 0;
+        scoreB = 0;
+
+        if (!isMatchComplete()) {
+            currentSet = Math.min(currentSet + 1, FINAL_SET_NUMBER);
+        }
     }
 
     private void applySetRules() {
@@ -184,18 +227,6 @@ public class MatchData {
             return;
         }
 
-        if (scoreA > scoreB) {
-            setsWonA++;
-        } else {
-            setsWonB++;
-        }
-
-        history = new ArrayList<>();
-        scoreA = 0;
-        scoreB = 0;
-
-        if (!isMatchComplete()) {
-            currentSet = Math.min(currentSet + 1, FINAL_SET_NUMBER);
-        }
+        completeCurrentSet(scoreA > scoreB);
     }
 }
